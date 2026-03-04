@@ -1,0 +1,77 @@
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// Admin User Table
+model User {
+  id        String    @id @default(cuid())
+  email     String    @unique
+  password  String   
+  fullName  String?
+  listings  Listing[] 
+  createdAt DateTime  @default(now())
+}
+
+// District Table
+model District {
+  id            Int            @id @default(autoincrement())
+  name          String         @unique
+  neighborhoods Neighborhood[] 
+}
+
+// Neighborhood Table
+model Neighborhood {
+  id         Int       @id @default(autoincrement())
+  name       String
+  districtId Int
+  district   District  @relation(fields: [districtId], references: [id], onDelete: Cascade)
+  listings   Listing[] 
+}
+
+// 4. Listing Table
+model Listing {
+  id           String   @id @default(cuid())
+  title        String
+  description  String   @db.Text
+  price        Float
+  roomCount    String   
+  netSquareMeters Int
+  grossSquareMeters Int
+  buildingAge  Int
+  floorAt      String
+  totalFloor   Int
+  bathroomCount Int
+  kitchenType  String 
+  balcony      Boolean
+  elevator     Boolean
+  parking      String
+  furnished    Boolean
+  dues         Int
+  creditworthy Boolean
+  listingType  String   // For sale - For Rent
+  heating      String?  
+  isActive     Boolean  @default(true) 
+  
+  // Foreign Keys
+  neighborhoodId Int
+  neighborhood   Neighborhood @relation(fields: [neighborhoodId], references: [id])
+  userId         String
+  user           User         @relation(fields: [userId], references: [id])
+  images         Image[]
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+// Image Table
+model Image {
+  id        String  @id @default(cuid())
+  url       String  // Supabase Storage veya başka bir bulut linki
+  listingId String
+  listing   Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+}
