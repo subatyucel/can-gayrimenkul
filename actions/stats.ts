@@ -29,6 +29,7 @@ export async function getDashboardStats() {
           price: true,
           listingType: true,
           createdAt: true,
+          slug: true,
         },
       }),
       prisma.listing.groupBy({

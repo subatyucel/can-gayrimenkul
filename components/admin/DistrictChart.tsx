@@ -42,8 +42,6 @@ export function DistrictChart({ data }: DistrictChartProps) {
 
   return (
     <Card className="h-full flex flex-col">
-      {" "}
-      {/* h-full ve flex-col ile yüksekliği zorluyoruz */}
       <CardHeader>
         <CardTitle>İlçe Yoğunluğu</CardTitle>
         <CardDescription>En çok ilan bulunan ilk 5 bölge</CardDescription>
@@ -81,7 +79,6 @@ export function DistrictChart({ data }: DistrictChartProps) {
             </BarChart>
           </ChartContainer>
         ) : (
-          /* BOŞ VERİ GÖRÜNÜMÜ */
           <div className="flex flex-col items-center justify-center space-y-3 opacity-50 py-10">
             <div className="p-4 rounded-full bg-muted">
               <MapPinOff className="h-8 w-8 text-muted-foreground" />

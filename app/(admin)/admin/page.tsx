@@ -23,7 +23,7 @@ export default async function AdminDashboard() {
   const districtChartData = stats.districtStats.map((item, i) => ({
     district: item.name,
     count: item.count,
-    fill: `var(--color-chart-${i % 5}+1)`,
+    fill: `var(--color-chart-${(i % 5) + 1})`,
   }));
 
   return (
@@ -32,7 +32,7 @@ export default async function AdminDashboard() {
         Dashboard
       </h1>
       <StatCardGrid stats={stats} />
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7 mt-6">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7 my-6">
         <div className="col-span-4 md:col-span-3">
           <TypeChart data={typeChartData} />
         </div>
@@ -40,11 +40,8 @@ export default async function AdminDashboard() {
         <div className="col-span-4">
           <DistrictChart data={districtChartData} />
         </div>
-
-        <div className="col-span-8">
-          <RecentListingsTable data={stats.recentListings} />
-        </div>
       </div>
+      <RecentListingsTable data={stats.recentListings} />
     </>
   );
 }
