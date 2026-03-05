@@ -42,7 +42,7 @@ export async function getDashboardStats() {
     ]);
 
     const districtIds = districtGroups
-      .map((g) => g.districtId)
+      .map((g: { districtId: number | null }) => g.districtId)
       .filter((id): id is number => id !== null);
 
     const districts = await prisma.district.findMany({
