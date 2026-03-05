@@ -21,6 +21,7 @@ model User {
 model District {
   id            Int            @id @default(autoincrement())
   name          String         @unique
+  listings      Listing[]
   neighborhoods Neighborhood[] 
 }
 
@@ -54,10 +55,14 @@ model Listing {
   dues         Int
   creditworthy Boolean
   listingType  String   // For sale - For Rent
-  heating      String?  
+  heating      String  
   isActive     Boolean  @default(true) 
+  slug         String @unique
+  expireDate   DateTime
   
   // Foreign Keys
+  districtId     Int
+  district       District @relation(fields: [districtId], references: [id])
   neighborhoodId Int
   neighborhood   Neighborhood @relation(fields: [neighborhoodId], references: [id])
   userId         String
