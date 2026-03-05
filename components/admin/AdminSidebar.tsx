@@ -19,12 +19,19 @@ const menuItems = [
   { name: "Yeni İlan Ekle", href: "/admin/ilanlar/yeni", icon: PlusCircle },
   { name: "Ayarlar", href: "/admin/settings", icon: Settings },
 ];
+interface AdminSidebarProps {
+  isMobile?: boolean;
+}
 
-export function AdminSidebar() {
+export function AdminSidebar({ isMobile = false }: AdminSidebarProps) {
   const pathname = usePathname();
 
+  const containerClasses = isMobile
+    ? "flex flex-col h-full w-full bg-card"
+    : "hidden w-64 flex-col border-r bg-card md:flex h-screen sticky top-0";
+
   return (
-    <aside className="hidden w-64 flex-col border-r bg-card sm:flex h-screen sticky top-0">
+    <div className={containerClasses}>
       <div className="flex h-16 items-center border-b px-6">
         <Link
           href="/admin"
@@ -34,6 +41,7 @@ export function AdminSidebar() {
           <span>Can Gayrimenkul</span>
         </Link>
       </div>
+
       <nav className="flex-1 space-y-1 px-4 py-4">
         {menuItems.map((item) => {
           const isActive = pathname === item.href;
@@ -55,15 +63,16 @@ export function AdminSidebar() {
           );
         })}
       </nav>
-      <div className="border-t p-4">
+
+      <div className="border-t p-4 ">
         <Button
           variant="ghost"
-          className="w-full justify-start gap-3 text-destructive hover:text-destructive hover:bg-destructive/10"
+          className="w-full justify-start gap-3 text-destructive hover:text-destructive hover:bg-destructive/10 cursor-pointer"
         >
           <LogOut className="h-5 w-5" />
           Çıkış Yap
         </Button>
       </div>
-    </aside>
+    </div>
   );
 }
