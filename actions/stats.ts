@@ -50,12 +50,15 @@ export async function getDashboardStats() {
       select: { id: true, name: true },
     });
 
-    const districtStats = districtGroups.map((group) => ({
-      id: group.districtId,
-      name:
-        districts.find((d) => d.id === group.districtId)?.name || "Bilinmiyor",
-      count: group._count._all,
-    }));
+    const districtStats = districtGroups.map(
+      (group: { districtId: number | null; _count: { _all: number } }) => ({
+        id: group.districtId,
+        name:
+          districts.find((d) => d.id === group.districtId)?.name ||
+          "Bilinmiyor",
+        count: group._count._all,
+      }),
+    );
 
     return {
       forSaleTotal,
