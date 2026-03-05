@@ -1,7 +1,32 @@
 "use server";
 import { prisma } from "@/lib/prisma";
 
-export async function getDashboardStats() {
+type RecentListing = {
+  id: string;
+  title: string;
+  price: number;
+  listingType: string;
+  createdAt: Date;
+  slug: string;
+};
+
+type DistrictStat = {
+  id: number | null;
+  name: string;
+  count: number;
+};
+
+type DashboardStats = {
+  forSaleTotal: number;
+  forSaleActive: number;
+  forRentTotal: number;
+  forRentActive: number;
+  listedThisMonth: number;
+  recentListings: RecentListing[];
+  districtStats: DistrictStat[];
+};
+
+export async function getDashboardStats(): Promise<DashboardStats> {
   const startOfMonth = new Date();
   startOfMonth.setDate(1);
   startOfMonth.setHours(0, 0, 0, 0);
