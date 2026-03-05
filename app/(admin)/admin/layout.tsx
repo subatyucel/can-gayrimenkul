@@ -16,7 +16,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
       <AdminSidebar />
 
       <div className="flex flex-col flex-1">
-        <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-background px-4 md:px-6">
+        <header className="sticky md:hidden top-0 z-30 flex h-14 items-center gap-4 border-b bg-background px-4 md:px-6">
           <Sheet>
             <SheetTrigger asChild>
               <Button size="icon" variant="outline" className="md:hidden">
