@@ -45,10 +45,11 @@ export async function getDashboardStats() {
       .map((g: { districtId: number | null }) => g.districtId)
       .filter((id: number | null): id is number => id !== null);
 
-    const districts = await prisma.district.findMany({
-      where: { id: { in: districtIds } },
-      select: { id: true, name: true },
-    });
+    const districts: { id: number; name: string }[] =
+      await prisma.district.findMany({
+        where: { id: { in: districtIds } },
+        select: { id: true, name: true },
+      });
 
     const districtStats = districtGroups.map(
       (group: { districtId: number | null; _count: { _all: number } }) => ({
