@@ -1,17 +1,29 @@
 import { NextRequest, NextResponse } from "next/server";
 import { jwtVerify } from "jose";
 
-const SECRET = new TextEncoder().encode(process.env.JWT_SECRET);
-
 export default async function middleware(request: NextRequest) {
+  const secret = new TextEncoder().encode(process.env.JWT_SECRET);
   const session = request.cookies.get("admin_session");
+  const isLoginPage = request.nextUrl.pathname === "/admin/login";
+
+  if (isLoginPage) {
+    if (session?.value) {
+      try {
+        await jwtVerify(session.value, secret);
+        return NextResponse.redirect(new URL("/admin", request.url));
+      } catch {
+        return NextResponse.next();
+      }
+    }
+    return NextResponse.next();
+  }
 
   if (!session || !session.value) {
     return NextResponse.redirect(new URL("/admin/login", request.url));
   }
 
   try {
-    await jwtVerify(session.value, SECRET);
+    await jwtVerify(session.value, secret);
     return NextResponse.next();
   } catch {
     const response = NextResponse.redirect(
@@ -20,10 +32,8 @@ export default async function middleware(request: NextRequest) {
     response.cookies.set("admin_session", "", { path: "/", maxAge: 0 });
     return response;
   }
-
-  return NextResponse.next();
 }
 
 export const config = {
-  matcher: ["/admin/((?!login).*)", "/admin"],
+  matcher: ["/admin/(.*)", "/admin"],
 };
