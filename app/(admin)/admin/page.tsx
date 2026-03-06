@@ -41,7 +41,7 @@ export default async function AdminDashboard() {
           <DistrictChart data={districtChartData} />
         </div>
       </div>
-      <RecentListingsTable data={stats.recentListings} />
+      {/* <RecentListingsTable data={stats.recentListings} /> */}
     </>
   );
 }
