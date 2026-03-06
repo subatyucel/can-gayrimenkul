@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { logout } from "@/actions/auth";
 
 const menuItems = [
   { name: "Dashboard", href: "/admin", icon: LayoutDashboard },
@@ -65,13 +66,15 @@ export function AdminSidebar({ isMobile = false }: AdminSidebarProps) {
       </nav>
 
       <div className="border-t p-4 ">
-        <Button
-          variant="ghost"
-          className="w-full justify-start gap-3 text-destructive hover:text-destructive hover:bg-destructive/10 cursor-pointer"
-        >
-          <LogOut className="h-5 w-5" />
-          Çıkış Yap
-        </Button>
+        <form action={logout}>
+          <Button
+            variant="ghost"
+            className="w-full justify-start gap-3 text-destructive hover:text-destructive hover:bg-destructive/10 cursor-pointer"
+          >
+            <LogOut className="h-5 w-5" />
+            Çıkış Yap
+          </Button>
+        </form>
       </div>
     </div>
   );

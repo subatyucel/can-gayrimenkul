@@ -12,9 +12,19 @@ model User {
   id        String    @id @default(cuid())
   email     String    @unique
   password  String   
-  fullName  String?
+  fullName  String
   listings  Listing[] 
   createdAt DateTime  @default(now())
+}
+
+
+
+model Invitation {
+  id        String   @id @default(cuid())
+  token     String   @unique 
+  isUsed    Boolean  @default(false)
+  expiresAt DateTime 
+  createdAt DateTime @default(now())
 }
 
 // District Table
@@ -35,6 +45,12 @@ model Neighborhood {
 }
 
 // 4. Listing Table
+enum ListingType {
+  sale
+  rent
+}
+
+
 model Listing {
   id           String   @id @default(cuid())
   title        String
@@ -54,7 +70,7 @@ model Listing {
   furnished    Boolean
   dues         Int
   creditworthy Boolean
-  listingType  String   // For sale - For Rent
+  listingType  ListingType   // For sale - For Rent
   heating      String  
   isActive     Boolean  @default(true) 
   slug         String @unique
@@ -80,3 +96,4 @@ model Image {
   listingId String
   listing   Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
 }
+
