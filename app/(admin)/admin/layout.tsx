@@ -10,6 +10,13 @@ import {
 import { Button } from "@/components/ui/button";
 import { PanelLeft } from "lucide-react";
 
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+};
+
 export default function AdminLayout({ children }: { children: ReactNode }) {
   return (
     <div className="flex min-h-screen w-full bg-muted/40">
