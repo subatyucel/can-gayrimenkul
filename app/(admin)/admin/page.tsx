@@ -41,7 +41,11 @@ export default async function AdminDashboard() {
           <DistrictChart data={districtChartData} />
         </div>
       </div>
-      {/* <RecentListingsTable data={stats.recentListings} /> */}
+      <div className="w-full overflow-hidden">
+        <div className="overflow-x-auto">
+          <RecentListingsTable data={stats.recentListings} />
+        </div>
+      </div>
     </>
   );
 }
