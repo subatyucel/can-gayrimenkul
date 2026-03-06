@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { jwtVerify } from "jose";
 
-export default async function middleware(request: NextRequest) {
+export default async function proxy(request: NextRequest) {
   const secret = new TextEncoder().encode(process.env.JWT_SECRET);
   const session = request.cookies.get("admin_session");
   const isLoginPage = request.nextUrl.pathname === "/admin/login";
