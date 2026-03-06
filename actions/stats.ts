@@ -38,7 +38,7 @@ export async function getDashboardStats(): Promise<DashboardStats> {
       forRentActive,
       listedThisMonth,
       recentListings,
-      districtGroups,
+      districtResults,
     ] = await Promise.all([
       prisma.listing.count({ where: { listingType: "sale" } }),
       prisma.listing.count({ where: { listingType: "sale", isActive: true } }),
@@ -57,34 +57,23 @@ export async function getDashboardStats(): Promise<DashboardStats> {
           slug: true,
         },
       }),
-      prisma.listing.groupBy({
-        by: ["districtId"],
-        where: { isActive: true },
-        _count: { _all: true },
-        orderBy: { _count: { districtId: "desc" } },
+      prisma.district.findMany({
+        where: { listings: { some: { isActive: true } } },
+        select: {
+          id: true,
+          name: true,
+          _count: { select: { listings: { where: { isActive: true } } } },
+        },
+        orderBy: { listings: { _count: "desc" } },
         take: 5,
       }),
     ]);
 
-    const districtIds = districtGroups
-      .map((g: { districtId: number | null }) => g.districtId)
-      .filter((id: number | null): id is number => id !== null);
-
-    const districts: { id: number; name: string }[] =
-      await prisma.district.findMany({
-        where: { id: { in: districtIds } },
-        select: { id: true, name: true },
-      });
-
-    const districtStats = districtGroups.map(
-      (group: { districtId: number | null; _count: { _all: number } }) => ({
-        id: group.districtId,
-        name:
-          districts.find((d) => d.id === group.districtId)?.name ||
-          "Bilinmiyor",
-        count: group._count._all,
-      }),
-    );
+    const districtStats: DistrictStat[] = districtResults.map((d) => ({
+      id: d.id,
+      name: d.name,
+      count: d._count.listings,
+    }));
 
     return {
       forSaleTotal,
