@@ -20,7 +20,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
     <div className="flex min-h-screen w-full bg-muted/40">
       <AdminSidebar />
 
-      <div className="flex flex-col flex-1">
+      <div className="flex flex-col flex-1 min-w-0">
         <header className="sticky md:hidden top-0 z-30 flex h-14 items-center gap-4 border-b bg-background px-4 md:px-6">
           <Sheet>
             <SheetTrigger asChild>
