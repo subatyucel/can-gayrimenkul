@@ -129,7 +129,7 @@ export default function LandingPage() {
               </div>
             </div>
 
-            <div className="h-[1px] w-32 bg-[#c5a059]/30 mx-auto" />
+            <div className="h-px w-32 bg-[#c5a059]/30 mx-auto" />
 
             <footer className="text-[9px] tracking-[0.8em] uppercase opacity-30 text-white">
               © 2026 CAN GAYRİMENKUL - EST. İZMİR <br /> Developed by{" "}

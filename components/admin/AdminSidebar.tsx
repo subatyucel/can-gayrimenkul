@@ -27,7 +27,7 @@ export function AdminSidebar({ isMobile = false }: AdminSidebarProps) {
   const pathname = usePathname();
 
   const containerClasses = isMobile
-    ? "flex flex-col h-full w-full bg-card"
+    ? "flex flex-col h-full w-full bg-card max-h-screen overflow-hidden"
     : "hidden w-64 flex-col border-r bg-card md:flex h-screen sticky top-0";
 
   return (
@@ -42,7 +42,7 @@ export function AdminSidebar({ isMobile = false }: AdminSidebarProps) {
         </Link>
       </div>
 
-      <nav className="flex-1 space-y-1 px-4 py-4">
+      <nav className="flex-1 space-y-1 px-4 py-4 min-h-0 overflow-y-auto">
         {menuItems.map((item) => {
           const isActive = pathname === item.href;
           return (
