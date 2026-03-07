@@ -7,10 +7,13 @@ export default async function proxy(request: NextRequest) {
   const isLoginPage = request.nextUrl.pathname === "/admin/giris-yap";
   const isRegisterPage =
     request.nextUrl.pathname.startsWith("/admin/kayit-ol/");
+  const isPasswordResetPage = request.nextUrl.pathname.startsWith(
+    "/admin/sifremi-unuttum",
+  );
 
   console.log(request.nextUrl.pathname);
 
-  if (isLoginPage || isRegisterPage) {
+  if (isLoginPage || isRegisterPage || isPasswordResetPage) {
     if (session?.value) {
       try {
         await jwtVerify(session.value, secret);

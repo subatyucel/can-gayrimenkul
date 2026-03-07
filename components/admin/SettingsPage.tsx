@@ -29,9 +29,10 @@ import {
 
 interface SettingsPageProps {
   currentEmail: string;
+  role: "owner" | "admin";
 }
 
-export function SettingsPage({ currentEmail }: SettingsPageProps) {
+export function SettingsPage({ currentEmail, role }: SettingsPageProps) {
   const [passwordMsg, setPasswordMsg] = useState<{
     error?: string;
     success?: string;
@@ -192,64 +193,67 @@ export function SettingsPage({ currentEmail }: SettingsPageProps) {
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <UserPlus className="h-5 w-5" />
-            Kullanıcı Davet Et
-          </CardTitle>
-          <CardDescription>
-            Yeni bir kullanıcı davet etmek için link oluşturun (24 saat geçerli)
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <Button
-            onClick={handleCreateInvite}
-            disabled={inviteLoading}
-            variant="outline"
-            className="cursor-pointer"
-          >
-            {inviteLoading ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <LinkIcon className="h-4 w-4" />
-            )}
-            Davet Linki Oluştur
-          </Button>
+      {role === "owner" && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <UserPlus className="h-5 w-5" />
+              Kullanıcı Davet Et
+            </CardTitle>
+            <CardDescription>
+              Yeni bir kullanıcı davet etmek için link oluşturun (24 saat
+              geçerli)
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <Button
+              onClick={handleCreateInvite}
+              disabled={inviteLoading}
+              variant="outline"
+              className="cursor-pointer"
+            >
+              {inviteLoading ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <LinkIcon className="h-4 w-4" />
+              )}
+              Davet Linki Oluştur
+            </Button>
 
-          {inviteLink && (
-            <div className="space-y-3">
-              <div className="flex items-center gap-2 rounded-md border bg-muted/50 p-3">
-                <code className="flex-1 text-sm break-all">{inviteLink}</code>
+            {inviteLink && (
+              <div className="space-y-3">
+                <div className="flex items-center gap-2 rounded-md border bg-muted/50 p-3">
+                  <code className="flex-1 text-sm break-all">{inviteLink}</code>
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleCopy}
+                    className="cursor-pointer"
+                  >
+                    {copied ? (
+                      <Check className="h-4 w-4 text-green-600" />
+                    ) : (
+                      <Copy className="h-4 w-4" />
+                    )}
+                    {copied ? "Kopyalandı!" : "Kopyala"}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleWhatsApp}
+                    className="cursor-pointer text-green-600 hover:text-green-700"
+                  >
+                    <MessageCircle className="h-4 w-4" />
+                    WhatsApp ile Paylaş
+                  </Button>
+                </div>
               </div>
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleCopy}
-                  className="cursor-pointer"
-                >
-                  {copied ? (
-                    <Check className="h-4 w-4 text-green-600" />
-                  ) : (
-                    <Copy className="h-4 w-4" />
-                  )}
-                  {copied ? "Kopyalandı!" : "Kopyala"}
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleWhatsApp}
-                  className="cursor-pointer text-green-600 hover:text-green-700"
-                >
-                  <MessageCircle className="h-4 w-4" />
-                  WhatsApp ile Paylaş
-                </Button>
-              </div>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+            )}
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

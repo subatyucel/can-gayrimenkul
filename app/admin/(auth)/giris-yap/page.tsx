@@ -13,9 +13,13 @@ import {
 import { useState } from "react";
 import { useFormStatus } from "react-dom";
 import Image from "next/image";
+import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 
 export default function LoginPage() {
   const [error, setError] = useState<string | null>(null);
+  const searchParams = useSearchParams();
+  const isReset = searchParams.get("reset") === "success";
 
   async function handleSubmit(formData: FormData) {
     setError(null);
@@ -41,6 +45,13 @@ export default function LoginPage() {
                   </CardDescription>
                 </div>
 
+                {isReset && (
+                  <div className="bg-green-500/15 text-green-700 text-sm p-3 rounded-md text-center">
+                    Şifreniz başarıyla sıfırlandı. Yeni şifrenizle giriş
+                    yapabilirsiniz.
+                  </div>
+                )}
+
                 {error && (
                   <div className="bg-destructive/15 text-destructive text-sm p-3 rounded-md text-center">
                     {error}
@@ -60,6 +71,12 @@ export default function LoginPage() {
                 <div className="grid gap-2">
                   <div className="flex items-center justify-between">
                     <Label htmlFor="password">Şifre</Label>
+                    <Link
+                      href="/admin/sifremi-unuttum"
+                      className="text-sm text-muted-foreground underline-offset-4 hover:underline"
+                    >
+                      Şifremi Unuttum
+                    </Link>
                   </div>
                   <Input
                     id="password"

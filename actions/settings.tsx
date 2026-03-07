@@ -26,7 +26,7 @@ export async function getCurrentUser() {
 
   return prisma.user.findUnique({
     where: { id: userId },
-    select: { id: true, email: true, fullName: true },
+    select: { id: true, email: true, fullName: true, role: true },
   });
 }
 
@@ -101,6 +101,13 @@ export async function changeEmail(formData: FormData) {
 export async function createInvitation() {
   const userId = await getCurrentUserId();
   if (!userId) return { error: "Oturum bulunamadı!" };
+
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+  if (!user || user.role !== "owner") {
+    return {
+      error: "Bu işlemi yalnızca Owner yetkisine sahip kullanıcılar yapabilir!",
+    };
+  }
 
   const token = await new SignJWT({ purpose: "invite" })
     .setProtectedHeader({ alg: "HS256" })

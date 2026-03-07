@@ -1,12 +1,14 @@
 "use server";
 
-import { prisma } from "@/lib/prisma"; //
+import { prisma } from "@/lib/prisma";
 import bcrypt from "bcrypt";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { jwtVerify, SignJWT } from "jose";
+import { Resend } from "resend";
 
 const SECRET = new TextEncoder().encode(process.env.JWT_SECRET);
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 export async function login(formData: FormData) {
   const email = formData.get("email") as string;
@@ -42,7 +44,7 @@ export async function logout() {
     maxAge: 0,
   });
 
-  redirect("/admin/giris-yap");
+  redirect("/admin/login");
 }
 
 export async function registerWithInvite(formData: FormData) {
@@ -84,9 +86,92 @@ export async function registerWithInvite(formData: FormData) {
 
   await prisma.$transaction([
     prisma.user.create({
-      data: { fullName, email, password: hashedPassword },
+      data: { fullName, email, password: hashedPassword, role: "admin" },
     }),
   ]);
 
   redirect("/admin/giris-yap");
+}
+
+export async function requestPasswordReset(formData: FormData) {
+  const email = formData.get("email") as string;
+
+  if (!email) {
+    return { error: "E-posta adresi gerekli!" };
+  }
+
+  const user = await prisma.user.findUnique({ where: { email } });
+
+  if (!user) {
+    return {
+      success: "Eğer bu e-posta kayıtlıysa, şifre sıfırlama linki gönderildi.",
+    };
+  }
+
+  const token = await new SignJWT({ purpose: "password-reset", email })
+    .setProtectedHeader({ alg: "HS256" })
+    .setExpirationTime("30m")
+    .sign(SECRET);
+
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
+  const resetLink = `${baseUrl}/admin/sifremi-unuttum/${token}`;
+
+  await resend.emails.send({
+    from: "Can Gayrimenkul <onboarding@resend.dev>",
+    to: email,
+    subject: "Şifre Sıfırlama",
+    html: `
+      <h2>Şifre Sıfırlama</h2>
+      <p>Merhaba ${user.fullName},</p>
+      <p>Şifrenizi sıfırlamak için aşağıdaki butona tıklayın. Bu link 30 dakika geçerlidir.</p>
+      <a href="${resetLink}" style="display:inline-block;padding:12px 24px;background:#0f172a;color:#fff;text-decoration:none;border-radius:6px;margin:16px 0;">Şifremi Sıfırla</a>
+      <p style="color:#666;font-size:13px;">Bu işlemi siz yapmadıysanız bu e-postayı görmezden gelin.</p>
+    `,
+  });
+
+  return {
+    success: "Eğer bu e-posta kayıtlıysa, şifre sıfırlama linki gönderildi.",
+  };
+}
+
+export async function resetPasswordWithToken(formData: FormData) {
+  const token = formData.get("token") as string;
+  const newPassword = formData.get("newPassword") as string;
+  const confirmPassword = formData.get("confirmPassword") as string;
+
+  if (!token || !newPassword || !confirmPassword) {
+    return { error: "Tüm alanları doldurun!" };
+  }
+
+  if (newPassword.length < 6) {
+    return { error: "Şifre en az 6 karakter olmalıdır!" };
+  }
+
+  if (newPassword !== confirmPassword) {
+    return { error: "Şifreler eşleşmiyor!" };
+  }
+
+  let email: string;
+  try {
+    const { payload } = await jwtVerify(token, SECRET);
+    if (payload.purpose !== "password-reset") {
+      return { error: "Geçersiz link!" };
+    }
+    email = payload.email as string;
+  } catch {
+    return { error: "Şifre sıfırlama linki geçersiz veya süresi dolmuş!" };
+  }
+
+  const user = await prisma.user.findUnique({ where: { email } });
+  if (!user) {
+    return { error: "Kullanıcı bulunamadı!" };
+  }
+
+  const hashedPassword = await bcrypt.hash(newPassword, 10);
+  await prisma.user.update({
+    where: { email },
+    data: { password: hashedPassword },
+  });
+
+  redirect("/admin/giris-yap?reset=success");
 }

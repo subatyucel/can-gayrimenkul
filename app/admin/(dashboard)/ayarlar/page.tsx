@@ -6,5 +6,5 @@ export default async function Page() {
   const user = await getCurrentUser();
   if (!user) redirect("/admin/giris-yap");
 
-  return <SettingsPage currentEmail={user.email} />;
+  return <SettingsPage currentEmail={user.email} role={user.role} />;
 }
