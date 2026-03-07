@@ -4,9 +4,13 @@ import { jwtVerify } from "jose";
 export default async function proxy(request: NextRequest) {
   const secret = new TextEncoder().encode(process.env.JWT_SECRET);
   const session = request.cookies.get("admin_session");
-  const isLoginPage = request.nextUrl.pathname === "/admin/login";
+  const isLoginPage = request.nextUrl.pathname === "/admin/giris-yap";
+  const isRegisterPage =
+    request.nextUrl.pathname.startsWith("/admin/kayit-ol/");
 
-  if (isLoginPage) {
+  console.log(request.nextUrl.pathname);
+
+  if (isLoginPage || isRegisterPage) {
     if (session?.value) {
       try {
         await jwtVerify(session.value, secret);

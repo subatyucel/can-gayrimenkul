@@ -18,7 +18,7 @@ const menuItems = [
   { name: "Dashboard", href: "/admin", icon: LayoutDashboard },
   { name: "İlanlarım", href: "/admin/ilanlar", icon: Home },
   { name: "Yeni İlan Ekle", href: "/admin/ilanlar/yeni", icon: PlusCircle },
-  { name: "Ayarlar", href: "/admin/settings", icon: Settings },
+  { name: "Ayarlar", href: "/admin/ayarlar", icon: Settings },
 ];
 interface AdminSidebarProps {
   isMobile?: boolean;

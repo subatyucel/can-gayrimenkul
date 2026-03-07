@@ -1,6 +1,6 @@
 "use client";
 
-import { login } from "@/actions/auth"; // Senin az önce yazdığın action
+import { login } from "@/actions/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";

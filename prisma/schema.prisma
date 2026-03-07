@@ -18,15 +18,6 @@ model User {
 }
 
 
-
-model Invitation {
-  id        String   @id @default(cuid())
-  token     String   @unique 
-  isUsed    Boolean  @default(false)
-  expiresAt DateTime 
-  createdAt DateTime @default(now())
-}
-
 // District Table
 model District {
   id            Int            @id @default(autoincrement())

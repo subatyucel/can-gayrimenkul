@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma"; //
 import bcrypt from "bcrypt";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { SignJWT } from "jose";
+import { jwtVerify, SignJWT } from "jose";
 
 const SECRET = new TextEncoder().encode(process.env.JWT_SECRET);
 
@@ -25,6 +25,7 @@ export async function login(formData: FormData) {
   const cookieStore = await cookies();
   cookieStore.set("admin_session", token, {
     secure: process.env.NODE_ENV === "production",
+    httpOnly: true,
     sameSite: "lax",
     path: "/",
     maxAge: 60 * 60 * 24 * 5, //5 days
@@ -42,4 +43,50 @@ export async function logout() {
   });
 
   redirect("/admin/login");
+}
+
+export async function registerWithInvite(formData: FormData) {
+  const token = formData.get("token") as string;
+  const fullName = formData.get("fullName") as string;
+  const email = formData.get("email") as string;
+  const password = formData.get("password") as string;
+  const confirmPassword = formData.get("confirmPassword") as string;
+
+  if (!token || !fullName || !email || !password || !confirmPassword) {
+    return { error: "Tüm alanları doldurun!" };
+  }
+
+  if (password.length < 6) {
+    return { error: "Şifre en az 6 karakter olmalıdır!" };
+  }
+
+  if (password !== confirmPassword) {
+    return { error: "Şifreler eşleşmiyor!" };
+  }
+
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email)) {
+    return { error: "Geçerli bir e-posta adresi girin!" };
+  }
+
+  try {
+    await jwtVerify(token, SECRET);
+  } catch {
+    return { error: "Davet linki geçersiz veya süresi dolmuş!" };
+  }
+
+  const existing = await prisma.user.findUnique({ where: { email } });
+  if (existing) {
+    return { error: "Bu e-posta adresi zaten kullanılıyor!" };
+  }
+
+  const hashedPassword = await bcrypt.hash(password, 10);
+
+  await prisma.$transaction([
+    prisma.user.create({
+      data: { fullName, email, password: hashedPassword },
+    }),
+  ]);
+
+  redirect("/admin/giris-yap");
 }
