@@ -5,10 +5,17 @@ import bcrypt from "bcrypt";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { jwtVerify, SignJWT } from "jose";
-import { Resend } from "resend";
+import nodemailer from "nodemailer";
 
 const SECRET = new TextEncoder().encode(process.env.JWT_SECRET);
-const resend = new Resend(process.env.RESEND_API_KEY);
+
+const transporter = nodemailer.createTransport({
+  service: "gmail",
+  auth: {
+    user: process.env.GMAIL_USER,
+    pass: process.env.GMAIL_APP_PASSWORD,
+  },
+});
 
 export async function login(formData: FormData) {
   const email = formData.get("email") as string;
@@ -116,17 +123,17 @@ export async function requestPasswordReset(formData: FormData) {
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
   const resetLink = `${baseUrl}/admin/sifremi-unuttum/${token}`;
 
-  await resend.emails.send({
-    from: "Can Gayrimenkul <onboarding@resend.dev>",
+  await transporter.sendMail({
+    from: `"Can Gayrimenkul" <${process.env.GMAIL_USER}>`,
     to: email,
     subject: "Şifre Sıfırlama",
     html: `
-      <h2>Şifre Sıfırlama</h2>
-      <p>Merhaba ${user.fullName},</p>
-      <p>Şifrenizi sıfırlamak için aşağıdaki butona tıklayın. Bu link 30 dakika geçerlidir.</p>
-      <a href="${resetLink}" style="display:inline-block;padding:12px 24px;background:#0f172a;color:#fff;text-decoration:none;border-radius:6px;margin:16px 0;">Şifremi Sıfırla</a>
-      <p style="color:#666;font-size:13px;">Bu işlemi siz yapmadıysanız bu e-postayı görmezden gelin.</p>
-    `,
+    <h2>Şifre Sıfırlama</h2>
+    <p>Merhaba ${user.fullName},</p>
+    <p>Şifrenizi sıfırlamak için aşağıdaki butona tıklayın. Bu link 30 dakika geçerlidir.</p>
+    <a href="${resetLink}" style="display:inline-block;padding:12px 24px;background:#0f172a;color:#fff;text-decoration:none;border-radius:6px;margin:16px 0;">Şifremi Sıfırla</a>
+    <p style="color:#666;font-size:13px;">Bu işlemi siz yapmadıysanız bu e-postayı görmezden gelin.</p>
+  `,
   });
 
   return {
