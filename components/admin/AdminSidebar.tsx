@@ -51,7 +51,7 @@ export function AdminSidebar({ isMobile = false }: AdminSidebarProps) {
               <Button
                 variant={isActive ? "secondary" : "ghost"}
                 className={cn(
-                  "w-full justify-start gap-3 px-3",
+                  "w-full justify-start gap-3 px-3 cursor-pointer",
                   isActive
                     ? "bg-accent text-accent-foreground font-medium"
                     : "text-muted-foreground",
