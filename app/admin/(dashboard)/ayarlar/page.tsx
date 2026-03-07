@@ -4,7 +4,7 @@ import { SettingsPage } from "@/components/admin/SettingsPage";
 
 export default async function Page() {
   const user = await getCurrentUser();
-  if (!user) redirect("/admin/login");
+  if (!user) redirect("/admin/giris-yap");
 
   return <SettingsPage currentEmail={user.email} />;
 }

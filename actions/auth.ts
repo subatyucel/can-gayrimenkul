@@ -42,7 +42,7 @@ export async function logout() {
     maxAge: 0,
   });
 
-  redirect("/admin/login");
+  redirect("/admin/giris-yap");
 }
 
 export async function registerWithInvite(formData: FormData) {
