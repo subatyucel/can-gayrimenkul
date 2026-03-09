@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useRef } from "react";
 import { useRouter } from "next/navigation";
 import {
   Card,
@@ -21,8 +21,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Loader2, Home, MapPin, Info, Settings2 } from "lucide-react";
+import {
+  Loader2,
+  Home,
+  MapPin,
+  Info,
+  Settings2,
+  ImagePlus,
+  X,
+} from "lucide-react";
 import { createListing, getNeighborhoods } from "@/actions/listing";
+import Image from "next/image";
 
 interface District {
   id: number;
@@ -52,7 +61,12 @@ const ROOM_OPTIONS = [
   "6+",
 ];
 const KITCHEN_OPTIONS = ["Açık Mutfak", "Kapalı Mutfak", "Amerikan Mutfak"];
-const PARKING_OPTIONS = ["Açık Otopark", "Kapalı Otopark", "Yok"];
+const PARKING_OPTIONS = [
+  "Açık Otopark",
+  "Kapalı Otopark",
+  "Yok",
+  "Açık ve Kapalı Otopark",
+];
 const HEATING_OPTIONS = [
   "Doğalgaz (Kombi)",
   "Merkezi",
@@ -64,7 +78,8 @@ const HEATING_OPTIONS = [
 const FLOOR_OPTIONS = [
   "Bodrum",
   "Zemin",
-  "Giriş Kat",
+  "Yüksek Giriş",
+  "Kot Altı 1",
   "1",
   "2",
   "3",
@@ -96,6 +111,10 @@ export function CreateListingForm({ districts }: CreateListingFormProps) {
   const [neighborhoods, setNeighborhoods] = useState<Neighborhood[]>([]);
   const [loadingNeighborhoods, setLoadingNeighborhoods] = useState(false);
 
+  const [files, setFiles] = useState<File[]>([]);
+  const [previews, setPreviews] = useState<string[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   async function handleDistrictChange(districtId: string) {
     setLoadingNeighborhoods(true);
     const data = await getNeighborhoods(parseInt(districtId));
@@ -103,8 +122,36 @@ export function CreateListingForm({ districts }: CreateListingFormProps) {
     setLoadingNeighborhoods(false);
   }
 
+  function handleImageChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const selected = Array.from(e.target.files || []);
+    const total = files.length + selected.length;
+
+    if (total > 10) {
+      setError("En fazla 10 fotoğraf yükleyebilirsiniz!");
+      return;
+    }
+
+    setError("");
+    setFiles((prev) => [...prev, ...selected]);
+
+    const newPreviews = selected.map((f) => URL.createObjectURL(f));
+    setPreviews((prev) => [...prev, ...newPreviews]);
+
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  }
+
+  function removeImage(index: number) {
+    URL.revokeObjectURL(previews[index]);
+    setFiles((prev) => prev.filter((_, i) => i !== index));
+    setPreviews((prev) => prev.filter((_, i) => i !== index));
+  }
+
   function handleSubmit(formData: FormData) {
     setError("");
+
+    formData.delete("images");
+    files.forEach((file) => formData.append("images", file));
+
     startTransition(async () => {
       const result = await createListing(formData);
       if (result.error) {
@@ -117,7 +164,6 @@ export function CreateListingForm({ districts }: CreateListingFormProps) {
 
   return (
     <form action={handleSubmit} className="space-y-6 max-w-4xl">
-      {/* Genel Bilgiler */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -181,7 +227,6 @@ export function CreateListingForm({ districts }: CreateListingFormProps) {
         </CardContent>
       </Card>
 
-      {/* Konum */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -237,7 +282,6 @@ export function CreateListingForm({ districts }: CreateListingFormProps) {
         </CardContent>
       </Card>
 
-      {/* Özellikler */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -400,7 +444,6 @@ export function CreateListingForm({ districts }: CreateListingFormProps) {
         </CardContent>
       </Card>
 
-      {/* Ek Özellikler */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -438,7 +481,55 @@ export function CreateListingForm({ districts }: CreateListingFormProps) {
         </CardContent>
       </Card>
 
-      {/* Hata mesajı & Gönder */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <ImagePlus className="h-5 w-5" />
+            Fotoğraflar
+          </CardTitle>
+          <CardDescription>
+            En fazla 10 fotoğraf yükleyebilirsiniz (maks. 5 MB/adet)
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <Input
+            ref={fileInputRef}
+            type="file"
+            name="images"
+            accept="image/*"
+            multiple
+            onChange={handleImageChange}
+            className="cursor-pointer"
+          />
+
+          {previews.length > 0 && (
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+              {previews.map((src, i) => (
+                <div
+                  key={i}
+                  className="relative group aspect-square rounded-lg overflow-hidden border"
+                >
+                  <Image
+                    width={100}
+                    height={100}
+                    src={src}
+                    alt={`Fotoğraf ${i + 1}`}
+                    className="h-full w-full object-cover"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => removeImage(i)}
+                    className="absolute top-1 right-1 bg-destructive text-destructive-foreground rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
       {error && <p className="text-sm text-destructive">{error}</p>}
 
       <div className="flex gap-3">

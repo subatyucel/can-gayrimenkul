@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { getCurrentUser } from "./settings";
 import slugify from "slugify";
+import { cloudinary } from "@/lib/cloudinary";
 
 export async function getListings() {
   const user = await getCurrentUser();
@@ -47,6 +48,12 @@ export async function deleteListing(listingId: string) {
   if (user.role === "admin" && listing.userId !== user.id) {
     return { error: "Bu ilanı silme yetkiniz bulunmamaktadır!" };
   }
+
+  // Cloudinary'deki fotoğrafları sil
+  await cloudinary.api
+    .delete_resources_by_prefix(`listings/${listingId}`)
+    .catch(() => {});
+  await cloudinary.api.delete_folder(`listings/${listingId}`).catch(() => {});
 
   await prisma.listing.delete({ where: { id: listingId } });
 
@@ -145,9 +152,31 @@ export async function createListing(formData: FormData) {
   if (isNaN(expireDate.getTime()))
     return { error: "Geçerli bir son yayın tarihi girin!" };
 
+  // Fotoğrafları al ve doğrula
+  const images = formData.getAll("images") as File[];
+  const validImages = images.filter((f) => f.size > 0);
+
+  if (validImages.length === 0) {
+    return { error: "En az bir fotoğraf yüklemelisiniz!" };
+  }
+
+  if (validImages.length > 10) {
+    return { error: "En fazla 10 fotoğraf yükleyebilirsiniz!" };
+  }
+
+  for (const img of validImages) {
+    if (img.size > 5 * 1024 * 1024) {
+      return { error: "Her fotoğraf en fazla 5 MB olabilir!" };
+    }
+    if (!img.type.startsWith("image/")) {
+      return { error: "Sadece görsel dosyaları yükleyebilirsiniz!" };
+    }
+  }
+
   const baseSlug = slugify(title, { lower: true, strict: true, locale: "tr" });
 
   try {
+    // İlanı oluştur
     const listing = await prisma.listing.create({
       data: {
         title,
@@ -178,9 +207,45 @@ export async function createListing(formData: FormData) {
       select: { id: true, listingNumber: true },
     });
 
+    // Slug'ı listingNumber ile güncelle
     await prisma.listing.update({
       where: { id: listing.id },
       data: { slug: `${baseSlug}-${listing.listingNumber}` },
+    });
+
+    // Fotoğrafları Cloudinary'ye yükle
+    const imageUrls: string[] = [];
+
+    for (const file of validImages) {
+      const bytes = await file.arrayBuffer();
+      const buffer = Buffer.from(bytes);
+
+      const result = await new Promise<{ secure_url: string }>(
+        (resolve, reject) => {
+          cloudinary.uploader
+            .upload_stream(
+              {
+                folder: `listings/${listing.id}`,
+                resource_type: "image",
+              },
+              (error, result) => {
+                if (error || !result) reject(error);
+                else resolve(result);
+              },
+            )
+            .end(buffer);
+        },
+      );
+
+      imageUrls.push(result.secure_url);
+    }
+
+    // Image kayıtlarını veritabanına ekle
+    await prisma.image.createMany({
+      data: imageUrls.map((url) => ({
+        url,
+        listingId: listing.id,
+      })),
     });
   } catch {
     return { error: "İlan oluşturulurken bir hata oluştu!" };
