@@ -88,6 +88,44 @@ export async function getPublicListings(params: {
   });
 }
 
+export async function getPublicListingBySlug(slug: string) {
+  const now = new Date();
+
+  return prisma.listing.findFirst({
+    where: { slug, isActive: true, expireDate: { gte: now } },
+    select: {
+      id: true,
+      listingNumber: true,
+      title: true,
+      description: true,
+      price: true,
+      listingType: true,
+      slug: true,
+      roomCount: true,
+      netSquareMeters: true,
+      grossSquareMeters: true,
+      buildingAge: true,
+      floorAt: true,
+      totalFloor: true,
+      bathroomCount: true,
+      kitchenType: true,
+      heating: true,
+      parking: true,
+      balcony: true,
+      elevator: true,
+      furnished: true,
+      creditworthy: true,
+      dues: true,
+      expireDate: true,
+      createdAt: true,
+      district: { select: { name: true } },
+      neighborhood: { select: { name: true } },
+      images: { select: { id: true, url: true } },
+      user: { select: { fullName: true } },
+    },
+  });
+}
+
 export async function deleteListing(listingId: string) {
   const user = await getCurrentUser();
   if (!user)
