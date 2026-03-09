@@ -103,7 +103,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      <section className="py-24 bg-black relative">
+      <section className="py-24 bg-black relative" id="iletisim">
         <div className="container mx-auto px-4 text-center">
           <div className="max-w-2xl mx-auto space-y-12">
             <div className="space-y-6">

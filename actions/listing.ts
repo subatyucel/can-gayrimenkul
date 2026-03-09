@@ -33,6 +33,61 @@ export async function getListings() {
   });
 }
 
+export async function getPublicListings(params: {
+  listingType?: string;
+  districtId?: number;
+  neighborhoodId?: number;
+  roomCount?: string;
+  minPrice?: number;
+  maxPrice?: number;
+  sort?: string;
+} = {}) {
+  const now = new Date();
+
+  return prisma.listing.findMany({
+    where: {
+      isActive: true,
+      expireDate: { gte: now },
+      ...(params.listingType && {
+        listingType: params.listingType as "sale" | "rent",
+      }),
+      ...(params.districtId && { districtId: params.districtId }),
+      ...(params.neighborhoodId && { neighborhoodId: params.neighborhoodId }),
+      ...(params.roomCount && { roomCount: params.roomCount }),
+      ...((params.minPrice || params.maxPrice) && {
+        price: {
+          ...(params.minPrice && { gte: params.minPrice }),
+          ...(params.maxPrice && { lte: params.maxPrice }),
+        },
+      }),
+    },
+    select: {
+      id: true,
+      listingNumber: true,
+      title: true,
+      price: true,
+      listingType: true,
+      slug: true,
+      roomCount: true,
+      netSquareMeters: true,
+      floorAt: true,
+      totalFloor: true,
+      district: { select: { name: true } },
+      neighborhood: { select: { name: true } },
+      images: { select: { url: true }, take: 1 },
+      createdAt: true,
+    },
+    orderBy:
+      params.sort === "oldest"
+        ? { createdAt: "asc" }
+        : params.sort === "price_asc"
+          ? { price: "asc" }
+          : params.sort === "price_desc"
+            ? { price: "desc" }
+            : { createdAt: "desc" },
+  });
+}
+
 export async function deleteListing(listingId: string) {
   const user = await getCurrentUser();
   if (!user)
