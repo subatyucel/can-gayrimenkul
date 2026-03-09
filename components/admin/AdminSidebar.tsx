@@ -17,7 +17,11 @@ import { logout } from "@/actions/auth";
 const menuItems = [
   { name: "Dashboard", href: "/admin", icon: LayoutDashboard },
   { name: "İlanlarım", href: "/admin/ilanlar", icon: Home },
-  { name: "Yeni İlan Ekle", href: "/admin/ilanlar/yeni", icon: PlusCircle },
+  {
+    name: "Yeni İlan Ekle",
+    href: "/admin/ilanlar/ilan-olustur",
+    icon: PlusCircle,
+  },
   { name: "Ayarlar", href: "/admin/ayarlar", icon: Settings },
 ];
 interface AdminSidebarProps {

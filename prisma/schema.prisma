@@ -50,6 +50,7 @@ enum ListingType {
 
 model Listing {
   id           String   @id @default(cuid())
+  listingNumber Int      @unique @default(autoincrement())
   title        String
   description  String   @db.Text
   price        Float

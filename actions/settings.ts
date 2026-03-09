@@ -7,7 +7,7 @@ import { jwtVerify, SignJWT } from "jose";
 
 const SECRET = new TextEncoder().encode(process.env.JWT_SECRET);
 
-async function getCurrentUserId(): Promise<string | null> {
+export async function getCurrentUserId(): Promise<string | null> {
   const cookieStore = await cookies();
   const token = cookieStore.get("admin_session")?.value;
   if (!token) return null;
