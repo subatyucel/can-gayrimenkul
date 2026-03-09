@@ -33,15 +33,17 @@ export async function getListings() {
   });
 }
 
-export async function getPublicListings(params: {
-  listingType?: string;
-  districtId?: number;
-  neighborhoodId?: number;
-  roomCount?: string;
-  minPrice?: number;
-  maxPrice?: number;
-  sort?: string;
-} = {}) {
+export async function getPublicListings(
+  params: {
+    listingType?: string;
+    districtId?: number;
+    neighborhoodId?: number;
+    roomCount?: string;
+    minPrice?: number;
+    maxPrice?: number;
+    sort?: string;
+  } = {},
+) {
   const now = new Date();
 
   return prisma.listing.findMany({
@@ -199,8 +201,7 @@ export async function getListingBySlug(slug: string) {
   const user = await getCurrentUser();
   if (!user) return null;
 
-  const where =
-    user.role === "owner" ? { slug } : { slug, userId: user.id };
+  const where = user.role === "owner" ? { slug } : { slug, userId: user.id };
 
   return prisma.listing.findFirst({
     where,
@@ -378,7 +379,8 @@ export async function createListing(formData: FormData) {
         listingId: listing.id,
       })),
     });
-  } catch {
+  } catch (e) {
+    console.log("İlan oluştururken bir hata", e);
     return { error: "İlan oluşturulurken bir hata oluştu!" };
   }
 
