@@ -102,6 +102,44 @@ export async function getNeighborhoods(districtId: number) {
   });
 }
 
+export async function getListingBySlug(slug: string) {
+  const user = await getCurrentUser();
+  if (!user) return null;
+
+  const where =
+    user.role === "owner" ? { slug } : { slug, userId: user.id };
+
+  return prisma.listing.findFirst({
+    where,
+    select: {
+      id: true,
+      title: true,
+      description: true,
+      price: true,
+      listingType: true,
+      expireDate: true,
+      districtId: true,
+      neighborhoodId: true,
+      roomCount: true,
+      netSquareMeters: true,
+      grossSquareMeters: true,
+      buildingAge: true,
+      floorAt: true,
+      totalFloor: true,
+      bathroomCount: true,
+      kitchenType: true,
+      heating: true,
+      parking: true,
+      balcony: true,
+      elevator: true,
+      furnished: true,
+      creditworthy: true,
+      dues: true,
+      images: { select: { id: true, url: true } },
+    },
+  });
+}
+
 export async function createListing(formData: FormData) {
   const user = await getCurrentUser();
   if (!user) return { error: "Oturum bulunamadı! Lütfen yeniden giriş yapın." };
@@ -249,6 +287,182 @@ export async function createListing(formData: FormData) {
     });
   } catch {
     return { error: "İlan oluşturulurken bir hata oluştu!" };
+  }
+
+  revalidatePath("/admin/ilanlar");
+  return { success: true };
+}
+
+function extractCloudinaryPublicId(url: string): string {
+  const match = url.match(/\/upload\/(?:v\d+\/)?(.+)\.[^.]+$/);
+  return match ? match[1] : "";
+}
+
+export async function updateListing(listingId: string, formData: FormData) {
+  const user = await getCurrentUser();
+  if (!user) return { error: "Oturum bulunamadı! Lütfen yeniden giriş yapın." };
+
+  const listing = await prisma.listing.findUnique({
+    where: { id: listingId },
+    select: { userId: true },
+  });
+
+  if (!listing) return { error: "İlan bulunamadı!" };
+
+  if (user.role === "admin" && listing.userId !== user.id) {
+    return { error: "Bu ilanı düzenleme yetkiniz bulunmamaktadır!" };
+  }
+
+  const title = (formData.get("title") as string)?.trim();
+  const description = (formData.get("description") as string)?.trim();
+  const price = parseFloat(formData.get("price") as string);
+  const listingType = formData.get("listingType") as string;
+  const roomCount = formData.get("roomCount") as string;
+  const netSquareMeters = parseInt(formData.get("netSquareMeters") as string);
+  const grossSquareMeters = parseInt(
+    formData.get("grossSquareMeters") as string,
+  );
+  const buildingAge = parseInt(formData.get("buildingAge") as string);
+  const floorAt = formData.get("floorAt") as string;
+  const totalFloor = parseInt(formData.get("totalFloor") as string);
+  const bathroomCount = parseInt(formData.get("bathroomCount") as string);
+  const kitchenType = formData.get("kitchenType") as string;
+  const balcony = formData.get("balcony") === "on";
+  const elevator = formData.get("elevator") === "on";
+  const parking = formData.get("parking") as string;
+  const furnished = formData.get("furnished") === "on";
+  const dues = parseInt(formData.get("dues") as string) || 0;
+  const creditworthy = formData.get("creditworthy") === "on";
+  const heating = formData.get("heating") as string;
+  const districtId = parseInt(formData.get("districtId") as string);
+  const neighborhoodId = parseInt(formData.get("neighborhoodId") as string);
+  const expireDate = new Date(formData.get("expireDate") as string);
+
+  if (
+    !title ||
+    !description ||
+    !listingType ||
+    !roomCount ||
+    !kitchenType ||
+    !parking ||
+    !heating ||
+    !floorAt
+  ) {
+    return { error: "Lütfen tüm zorunlu alanları doldurun!" };
+  }
+
+  if (isNaN(price) || price <= 0) return { error: "Geçerli bir fiyat girin!" };
+  if (isNaN(districtId) || isNaN(neighborhoodId))
+    return { error: "İlçe ve mahalle seçin!" };
+  if (isNaN(netSquareMeters) || isNaN(grossSquareMeters))
+    return { error: "Geçerli metrekare değerleri girin!" };
+  if (isNaN(expireDate.getTime()))
+    return { error: "Geçerli bir son yayın tarihi girin!" };
+
+  try {
+    // Silinecek fotoğrafları işle
+    const deletedImageIds = formData.getAll("deletedImageId") as string[];
+    if (deletedImageIds.length > 0) {
+      const imagesToDelete = await prisma.image.findMany({
+        where: { id: { in: deletedImageIds }, listingId },
+        select: { id: true, url: true },
+      });
+
+      for (const img of imagesToDelete) {
+        const publicId = extractCloudinaryPublicId(img.url);
+        if (publicId) {
+          await cloudinary.uploader.destroy(publicId).catch(() => {});
+        }
+      }
+
+      await prisma.image.deleteMany({
+        where: { id: { in: deletedImageIds } },
+      });
+    }
+
+    // Yeni fotoğrafları yükle
+    const newImages = formData.getAll("images") as File[];
+    const validNewImages = newImages.filter((f) => f.size > 0);
+
+    if (validNewImages.length > 0) {
+      for (const img of validNewImages) {
+        if (img.size > 5 * 1024 * 1024) {
+          return { error: "Her fotoğraf en fazla 5 MB olabilir!" };
+        }
+        if (!img.type.startsWith("image/")) {
+          return { error: "Sadece görsel dosyaları yükleyebilirsiniz!" };
+        }
+      }
+
+      const remainingCount = await prisma.image.count({
+        where: { listingId },
+      });
+      if (remainingCount + validNewImages.length > 10) {
+        return { error: "En fazla 10 fotoğraf yükleyebilirsiniz!" };
+      }
+
+      const imageUrls: string[] = [];
+      for (const file of validNewImages) {
+        const bytes = await file.arrayBuffer();
+        const buffer = Buffer.from(bytes);
+
+        const result = await new Promise<{ secure_url: string }>(
+          (resolve, reject) => {
+            cloudinary.uploader
+              .upload_stream(
+                { folder: `listings/${listingId}`, resource_type: "image" },
+                (error, result) => {
+                  if (error || !result) reject(error);
+                  else resolve(result);
+                },
+              )
+              .end(buffer);
+          },
+        );
+
+        imageUrls.push(result.secure_url);
+      }
+
+      await prisma.image.createMany({
+        data: imageUrls.map((url) => ({ url, listingId })),
+      });
+    }
+
+    // En az 1 fotoğraf kaldığını doğrula
+    const totalImages = await prisma.image.count({ where: { listingId } });
+    if (totalImages === 0) {
+      return { error: "En az bir fotoğraf olmalıdır!" };
+    }
+
+    await prisma.listing.update({
+      where: { id: listingId },
+      data: {
+        title,
+        description,
+        price,
+        listingType: listingType as "sale" | "rent",
+        roomCount,
+        netSquareMeters,
+        grossSquareMeters,
+        buildingAge,
+        floorAt,
+        totalFloor,
+        bathroomCount,
+        kitchenType,
+        balcony,
+        elevator,
+        parking,
+        furnished,
+        dues,
+        creditworthy,
+        heating,
+        expireDate,
+        districtId,
+        neighborhoodId,
+      },
+    });
+  } catch {
+    return { error: "İlan güncellenirken bir hata oluştu!" };
   }
 
   revalidatePath("/admin/ilanlar");

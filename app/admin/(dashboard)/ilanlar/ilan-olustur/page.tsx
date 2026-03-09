@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/actions/settings";
 import { getDistricts } from "@/actions/listing";
-import { CreateListingForm } from "@/components/admin/CreateListingForm";
+import { ListingForm } from "@/components/admin/ListingForm";
 
 export default async function CreateListingPage() {
   const user = await getCurrentUser();
@@ -14,7 +14,7 @@ export default async function CreateListingPage() {
       <h1 className="text-2xl font-bold tracking-tight mb-6">
         Yeni İlan Oluştur
       </h1>
-      <CreateListingForm districts={districts} />
+      <ListingForm districts={districts} />
     </>
   );
 }

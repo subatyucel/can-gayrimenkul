@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition, useRef } from "react";
+import { useState, useTransition, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
   Card,
@@ -30,8 +30,19 @@ import {
   ImagePlus,
   X,
 } from "lucide-react";
-import { createListing, getNeighborhoods } from "@/actions/listing";
+import {
+  createListing,
+  updateListing,
+  getNeighborhoods,
+} from "@/actions/listing";
 import Image from "next/image";
+import {
+  ROOM_OPTIONS,
+  KITCHEN_OPTIONS,
+  PARKING_OPTIONS,
+  HEATING_OPTIONS,
+  FLOOR_OPTIONS,
+} from "@/lib/constans";
 
 interface District {
   id: number;
@@ -43,79 +54,78 @@ interface Neighborhood {
   name: string;
 }
 
-interface CreateListingFormProps {
-  districts: District[];
+interface ListingData {
+  id: string;
+  title: string;
+  description: string;
+  price: number;
+  listingType: string;
+  expireDate: Date | string;
+  districtId: number;
+  neighborhoodId: number;
+  roomCount: string;
+  netSquareMeters: number;
+  grossSquareMeters: number;
+  buildingAge: number;
+  floorAt: string;
+  totalFloor: number;
+  bathroomCount: number;
+  kitchenType: string;
+  heating: string;
+  parking: string;
+  balcony: boolean;
+  elevator: boolean;
+  furnished: boolean;
+  creditworthy: boolean;
+  dues: number;
+  images: { id: string; url: string }[];
 }
 
-const ROOM_OPTIONS = [
-  "1+0",
-  "1+1",
-  "2+1",
-  "2+2",
-  "3+1",
-  "3+2",
-  "4+1",
-  "4+2",
-  "5+1",
-  "5+2",
-  "6+",
-];
-const KITCHEN_OPTIONS = ["Açık Mutfak", "Kapalı Mutfak", "Amerikan Mutfak"];
-const PARKING_OPTIONS = [
-  "Açık Otopark",
-  "Kapalı Otopark",
-  "Yok",
-  "Açık ve Kapalı Otopark",
-];
-const HEATING_OPTIONS = [
-  "Doğalgaz (Kombi)",
-  "Merkezi",
-  "Yerden Isıtma",
-  "Klima",
-  "Soba",
-  "Yok",
-];
-const FLOOR_OPTIONS = [
-  "Bodrum",
-  "Zemin",
-  "Yüksek Giriş",
-  "Kot Altı 1",
-  "1",
-  "2",
-  "3",
-  "4",
-  "5",
-  "6",
-  "7",
-  "8",
-  "9",
-  "10",
-  "11",
-  "12",
-  "13",
-  "14",
-  "15",
-  "16",
-  "17",
-  "18",
-  "19",
-  "20",
-  "20+",
-];
+interface ListingFormProps {
+  districts: District[];
+  initialData?: ListingData;
+}
 
-export function CreateListingForm({ districts }: CreateListingFormProps) {
+function formatDateForInput(date: Date | string): string {
+  return new Date(date).toISOString().split("T")[0];
+}
+
+export function ListingForm({ districts, initialData }: ListingFormProps) {
   const router = useRouter();
+  const isEditMode = !!initialData;
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState("");
 
   const [neighborhoods, setNeighborhoods] = useState<Neighborhood[]>([]);
-  const [loadingNeighborhoods, setLoadingNeighborhoods] = useState(false);
+  const [loadingNeighborhoods, setLoadingNeighborhoods] = useState(
+    !!initialData?.districtId,
+  );
+  const [selectedNeighborhoodId, setSelectedNeighborhoodId] = useState<string>(
+    initialData?.neighborhoodId?.toString() ?? "",
+  );
 
-  const [files, setFiles] = useState<File[]>([]);
-  const [previews, setPreviews] = useState<string[]>([]);
+  // Mevcut Cloudinary görselleri (edit modunda)
+  const [existingImages, setExistingImages] = useState<
+    { id: string; url: string }[]
+  >(initialData?.images ?? []);
+
+  // Yeni yüklenecek dosyalar
+  const [newFiles, setNewFiles] = useState<File[]>([]);
+  const [newPreviews, setNewPreviews] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Edit modunda ilçeye ait mahalleleri yükle
+  useEffect(() => {
+    if (initialData?.districtId) {
+      getNeighborhoods(initialData.districtId).then((data) => {
+        setNeighborhoods(data);
+        setLoadingNeighborhoods(false);
+      });
+    }
+  }, [initialData?.districtId]);
+
   async function handleDistrictChange(districtId: string) {
+    setSelectedNeighborhoodId("");
     setLoadingNeighborhoods(true);
     const data = await getNeighborhoods(parseInt(districtId));
     setNeighborhoods(data);
@@ -124,7 +134,7 @@ export function CreateListingForm({ districts }: CreateListingFormProps) {
 
   function handleImageChange(e: React.ChangeEvent<HTMLInputElement>) {
     const selected = Array.from(e.target.files || []);
-    const total = files.length + selected.length;
+    const total = existingImages.length + newFiles.length + selected.length;
 
     if (total > 10) {
       setError("En fazla 10 fotoğraf yükleyebilirsiniz!");
@@ -132,35 +142,61 @@ export function CreateListingForm({ districts }: CreateListingFormProps) {
     }
 
     setError("");
-    setFiles((prev) => [...prev, ...selected]);
+    setNewFiles((prev) => [...prev, ...selected]);
 
-    const newPreviews = selected.map((f) => URL.createObjectURL(f));
-    setPreviews((prev) => [...prev, ...newPreviews]);
+    const newPreviewUrls = selected.map((f) => URL.createObjectURL(f));
+    setNewPreviews((prev) => [...prev, ...newPreviewUrls]);
 
     if (fileInputRef.current) fileInputRef.current.value = "";
   }
 
   function removeImage(index: number) {
-    URL.revokeObjectURL(previews[index]);
-    setFiles((prev) => prev.filter((_, i) => i !== index));
-    setPreviews((prev) => prev.filter((_, i) => i !== index));
+    if (index < existingImages.length) {
+      setExistingImages((prev) => prev.filter((_, i) => i !== index));
+    } else {
+      const newIndex = index - existingImages.length;
+      URL.revokeObjectURL(newPreviews[newIndex]);
+      setNewFiles((prev) => prev.filter((_, i) => i !== newIndex));
+      setNewPreviews((prev) => prev.filter((_, i) => i !== newIndex));
+    }
   }
 
   function handleSubmit(formData: FormData) {
     setError("");
 
+    // Yeni dosyaları forma ekle
     formData.delete("images");
-    files.forEach((file) => formData.append("images", file));
+    newFiles.forEach((file) => formData.append("images", file));
 
     startTransition(async () => {
-      const result = await createListing(formData);
-      if (result.error) {
-        setError(result.error);
+      if (isEditMode) {
+        // Silinen mevcut görsellerin ID'lerini ekle
+        const deletedIds = (initialData.images ?? [])
+          .filter((img) => !existingImages.find((e) => e.id === img.id))
+          .map((img) => img.id);
+        deletedIds.forEach((id) => formData.append("deletedImageId", id));
+
+        const result = await updateListing(initialData.id, formData);
+        if (result.error) {
+          setError(result.error);
+        } else {
+          router.push("/admin/ilanlar");
+        }
       } else {
-        router.push("/admin/ilanlar");
+        const result = await createListing(formData);
+        if (result.error) {
+          setError(result.error);
+        } else {
+          router.push("/admin/ilanlar");
+        }
       }
     });
   }
+
+  const allPreviews: { src: string; isExisting: boolean }[] = [
+    ...existingImages.map((img) => ({ src: img.url, isExisting: true })),
+    ...newPreviews.map((src) => ({ src, isExisting: false })),
+  ];
 
   return (
     <form action={handleSubmit} className="space-y-6 max-w-4xl">
@@ -179,6 +215,7 @@ export function CreateListingForm({ districts }: CreateListingFormProps) {
               id="title"
               name="title"
               placeholder="Örn: Deniz Manzaralı 3+1 Daire"
+              defaultValue={initialData?.title}
               required
             />
           </div>
@@ -190,13 +227,18 @@ export function CreateListingForm({ districts }: CreateListingFormProps) {
               name="description"
               placeholder="İlan detaylarını yazın..."
               rows={5}
+              defaultValue={initialData?.description}
               required
             />
           </div>
 
           <div className="space-y-2">
             <Label htmlFor="listingType">İlan Türü</Label>
-            <Select name="listingType" required>
+            <Select
+              name="listingType"
+              required
+              defaultValue={initialData?.listingType}
+            >
               <SelectTrigger id="listingType">
                 <SelectValue placeholder="Seçiniz" />
               </SelectTrigger>
@@ -216,13 +258,24 @@ export function CreateListingForm({ districts }: CreateListingFormProps) {
               min="0"
               step="0.01"
               placeholder="0"
+              defaultValue={initialData?.price}
               required
             />
           </div>
 
           <div className="space-y-2">
             <Label htmlFor="expireDate">Son Yayın Tarihi</Label>
-            <Input id="expireDate" name="expireDate" type="date" required />
+            <Input
+              id="expireDate"
+              name="expireDate"
+              type="date"
+              defaultValue={
+                initialData?.expireDate
+                  ? formatDateForInput(initialData.expireDate)
+                  : undefined
+              }
+              required
+            />
           </div>
         </CardContent>
       </Card>
@@ -241,6 +294,7 @@ export function CreateListingForm({ districts }: CreateListingFormProps) {
             <Select
               name="districtId"
               required
+              defaultValue={initialData?.districtId?.toString()}
               onValueChange={handleDistrictChange}
             >
               <SelectTrigger id="districtId">
@@ -261,6 +315,8 @@ export function CreateListingForm({ districts }: CreateListingFormProps) {
             <Select
               name="neighborhoodId"
               required
+              value={selectedNeighborhoodId}
+              onValueChange={setSelectedNeighborhoodId}
               disabled={loadingNeighborhoods || neighborhoods.length === 0}
             >
               <SelectTrigger id="neighborhoodId">
@@ -293,7 +349,11 @@ export function CreateListingForm({ districts }: CreateListingFormProps) {
         <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           <div className="space-y-2">
             <Label htmlFor="roomCount">Oda Sayısı</Label>
-            <Select name="roomCount" required>
+            <Select
+              name="roomCount"
+              required
+              defaultValue={initialData?.roomCount}
+            >
               <SelectTrigger id="roomCount">
                 <SelectValue placeholder="Seçiniz" />
               </SelectTrigger>
@@ -315,6 +375,7 @@ export function CreateListingForm({ districts }: CreateListingFormProps) {
               type="number"
               min="0"
               placeholder="0"
+              defaultValue={initialData?.netSquareMeters}
               required
             />
           </div>
@@ -327,6 +388,7 @@ export function CreateListingForm({ districts }: CreateListingFormProps) {
               type="number"
               min="0"
               placeholder="0"
+              defaultValue={initialData?.grossSquareMeters}
               required
             />
           </div>
@@ -339,13 +401,14 @@ export function CreateListingForm({ districts }: CreateListingFormProps) {
               type="number"
               min="0"
               placeholder="0"
+              defaultValue={initialData?.buildingAge}
               required
             />
           </div>
 
           <div className="space-y-2">
             <Label htmlFor="floorAt">Bulunduğu Kat</Label>
-            <Select name="floorAt" required>
+            <Select name="floorAt" required defaultValue={initialData?.floorAt}>
               <SelectTrigger id="floorAt">
                 <SelectValue placeholder="Seçiniz" />
               </SelectTrigger>
@@ -367,6 +430,7 @@ export function CreateListingForm({ districts }: CreateListingFormProps) {
               type="number"
               min="0"
               placeholder="0"
+              defaultValue={initialData?.totalFloor}
               required
             />
           </div>
@@ -379,13 +443,18 @@ export function CreateListingForm({ districts }: CreateListingFormProps) {
               type="number"
               min="0"
               placeholder="0"
+              defaultValue={initialData?.bathroomCount}
               required
             />
           </div>
 
           <div className="space-y-2">
             <Label htmlFor="kitchenType">Mutfak Tipi</Label>
-            <Select name="kitchenType" required>
+            <Select
+              name="kitchenType"
+              required
+              defaultValue={initialData?.kitchenType}
+            >
               <SelectTrigger id="kitchenType">
                 <SelectValue placeholder="Seçiniz" />
               </SelectTrigger>
@@ -401,7 +470,7 @@ export function CreateListingForm({ districts }: CreateListingFormProps) {
 
           <div className="space-y-2">
             <Label htmlFor="heating">Isıtma</Label>
-            <Select name="heating" required>
+            <Select name="heating" required defaultValue={initialData?.heating}>
               <SelectTrigger id="heating">
                 <SelectValue placeholder="Seçiniz" />
               </SelectTrigger>
@@ -417,7 +486,7 @@ export function CreateListingForm({ districts }: CreateListingFormProps) {
 
           <div className="space-y-2">
             <Label htmlFor="parking">Otopark</Label>
-            <Select name="parking" required>
+            <Select name="parking" required defaultValue={initialData?.parking}>
               <SelectTrigger id="parking">
                 <SelectValue placeholder="Seçiniz" />
               </SelectTrigger>
@@ -439,6 +508,7 @@ export function CreateListingForm({ districts }: CreateListingFormProps) {
               type="number"
               min="0"
               placeholder="0"
+              defaultValue={initialData?.dues}
             />
           </div>
         </CardContent>
@@ -454,25 +524,41 @@ export function CreateListingForm({ districts }: CreateListingFormProps) {
         <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div className="flex items-center gap-2">
-              <Checkbox id="balcony" name="balcony" />
+              <Checkbox
+                id="balcony"
+                name="balcony"
+                defaultChecked={initialData?.balcony}
+              />
               <Label htmlFor="balcony" className="cursor-pointer">
                 Balkon
               </Label>
             </div>
             <div className="flex items-center gap-2">
-              <Checkbox id="elevator" name="elevator" />
+              <Checkbox
+                id="elevator"
+                name="elevator"
+                defaultChecked={initialData?.elevator}
+              />
               <Label htmlFor="elevator" className="cursor-pointer">
                 Asansör
               </Label>
             </div>
             <div className="flex items-center gap-2">
-              <Checkbox id="furnished" name="furnished" />
+              <Checkbox
+                id="furnished"
+                name="furnished"
+                defaultChecked={initialData?.furnished}
+              />
               <Label htmlFor="furnished" className="cursor-pointer">
                 Eşyalı
               </Label>
             </div>
             <div className="flex items-center gap-2">
-              <Checkbox id="creditworthy" name="creditworthy" />
+              <Checkbox
+                id="creditworthy"
+                name="creditworthy"
+                defaultChecked={initialData?.creditworthy}
+              />
               <Label htmlFor="creditworthy" className="cursor-pointer">
                 Krediye Uygun
               </Label>
@@ -502,9 +588,9 @@ export function CreateListingForm({ districts }: CreateListingFormProps) {
             className="cursor-pointer"
           />
 
-          {previews.length > 0 && (
+          {allPreviews.length > 0 && (
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
-              {previews.map((src, i) => (
+              {allPreviews.map((item, i) => (
                 <div
                   key={i}
                   className="relative group aspect-square rounded-lg overflow-hidden border"
@@ -512,7 +598,7 @@ export function CreateListingForm({ districts }: CreateListingFormProps) {
                   <Image
                     width={100}
                     height={100}
-                    src={src}
+                    src={item.src}
                     alt={`Fotoğraf ${i + 1}`}
                     className="h-full w-full object-cover"
                   />
@@ -535,7 +621,7 @@ export function CreateListingForm({ districts }: CreateListingFormProps) {
       <div className="flex gap-3">
         <Button type="submit" disabled={isPending} className="cursor-pointer">
           {isPending && <Loader2 className="h-4 w-4 animate-spin" />}
-          İlanı Oluştur
+          {isEditMode ? "İlanı Güncelle" : "İlanı Oluştur"}
         </Button>
         <Button
           type="button"
