@@ -76,14 +76,71 @@ A secondary issue was Recharts requiring CSS custom properties to resolve at SVG
 
 ## Installation & Usage
 
+### Environment Variables
+
+Copy `.env.example` to `.env` and fill in each value as described below.
+
+---
+
+**`DATABASE_URL`**
+A PostgreSQL connection string. Options:
+
+- **Local:** Install PostgreSQL, create a database (`createdb can_gayrimenkul`), then use `postgresql://USER:PASSWORD@localhost:5432/can_gayrimenkul`
+- **Cloud:** Create a free database on [Supabase](https://supabase.com). After creating the project, copy the connection string from the dashboard (Project → Project Settings → Connect → ORM's → Prisma). Use the **pooled** connection string for production.
+
+---
+
+**`JWT_SECRET`**
+An arbitrary secret string used to sign and verify all JWTs (session tokens, password reset links, invite links). Generate a secure value with:
+
+```bash
+node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+```
+
+---
+
+**`NEXT_PUBLIC_BASE_URL`**
+The full public URL of the application, without a trailing slash.
+
+- Development: `http://localhost:3000`
+- Production: `https://yourdomain.com`
+
+---
+
+**`ADMIN_EMAIL` / `ADMIN_PASSWORD` / `ADMIN_NAME`**
+Credentials for the initial `owner` account created by the seed script. These are only used once during `prisma db seed` and can be any values you choose. After seeding, log in at `/admin/giris-yap` with these credentials.
+
+---
+
+**`GMAIL_USER` / `GMAIL_APP_PASSWORD`**
+Used by Nodemailer to send password reset emails via Gmail.
+
+1. Use or create a Gmail account for the application.
+2. Enable 2-Step Verification on the account (required for App Passwords): Google Account → Security → 2-Step Verification.
+3. Generate an App Password: Google Account → Security → 2-Step Verification → App passwords. Select "Mail" and generate.
+4. Set `GMAIL_USER` to the Gmail address and `GMAIL_APP_PASSWORD` to the 16-character app password.
+
+---
+
+**`CLOUDINARY_CLOUD_NAME` / `CLOUDINARY_API_KEY` / `CLOUDINARY_API_SECRET`**
+Used for listing image storage and CDN delivery.
+
+1. Create a free account at [cloudinary.com](https://cloudinary.com).
+2. From the Cloudinary Console dashboard, all three values are visible under **API Keys** in the top section.
+3. `CLOUDINARY_CLOUD_NAME` is the cloud name shown in the URL bar and dashboard (e.g. `dxyz123`).
+4. Click **API Keys** → the default key shows `API Key` and `API Secret` (reveal with the eye icon).
+
+---
+
+### Setup Commands
+
 ```bash
 # 1. Install dependencies
 pnpm install
 
 # 2. Configure environment variables
 cp .env.example .env
-# Fill in: DATABASE_URL, JWT_SECRET, CLOUDINARY_*, GMAIL_*, NEXT_PUBLIC_BASE_URL
-# Seed vars: ADMIN_EMAIL, ADMIN_PASSWORD, ADMIN_NAME
+# Fill in all values as described above
 
 # 3. Run database migrations
 pnpm dlx prisma migrate deploy
