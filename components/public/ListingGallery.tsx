@@ -72,7 +72,7 @@ export default function ListingGallery({ images, title }: ListingGalleryProps) {
               onClick={() => setCurrent(i)}
               className={`relative shrink-0 w-16 h-16 overflow-hidden rounded-sm border-2 transition-all ${
                 i === current
-                  ? "border-[#c5a059]"
+                  ? "border-gold"
                   : "border-transparent hover:border-gray-300"
               }`}
             >

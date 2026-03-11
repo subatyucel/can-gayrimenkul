@@ -52,7 +52,7 @@ export default async function IlanlarPage({
       <div className="border-b border-gray-200 bg-white py-10">
         <div className="container mx-auto px-4 max-w-7xl">
           <div className="space-y-2">
-            <p className="text-[#c5a059] text-[10px] tracking-[0.6em] uppercase">
+            <p className="text-gold text-[10px] tracking-[0.6em] uppercase">
               Portföy
             </p>
             <h1 className="text-gray-900 font-serif text-3xl md:text-4xl">
@@ -61,7 +61,7 @@ export default async function IlanlarPage({
             <p className="text-gray-400 text-sm">
               {listings.length} ilan listeleniyor
               {hasFilters && (
-                <span className="text-[#c5a059]"> — filtre uygulandı</span>
+                <span className="text-gold"> — filtre uygulandı</span>
               )}
             </p>
           </div>

@@ -33,7 +33,7 @@ export default function PublicListingCard({ listing }: PublicListingCardProps) {
   return (
     <Link
       href={`/ilan/${listing.slug}`}
-      className="group block bg-white border border-gray-200 hover:border-[#c5a059]/50 transition-all duration-300 hover:shadow-lg rounded-sm overflow-hidden"
+      className="group block bg-white border border-gray-200 hover:border-gold/50 transition-all duration-300 hover:shadow-lg rounded-sm overflow-hidden"
     >
       {/* Image */}
       <div className="relative aspect-4/3 overflow-hidden bg-gray-100">
@@ -75,7 +75,7 @@ export default function PublicListingCard({ listing }: PublicListingCardProps) {
       {/* Content */}
       <div className="p-4 space-y-3">
         {/* Location */}
-        <div className="flex items-center gap-1.5 text-[#c5a059]">
+        <div className="flex items-center gap-1.5 text-gold">
           <MapPin className="h-3 w-3 shrink-0" />
           <span className="text-[11px] tracking-wider uppercase truncate">
             {listing.district.name} / {listing.neighborhood.name}
@@ -83,7 +83,7 @@ export default function PublicListingCard({ listing }: PublicListingCardProps) {
         </div>
 
         {/* Title */}
-        <h3 className="text-gray-900 font-serif text-base leading-snug line-clamp-2 group-hover:text-[#c5a059] transition-colors">
+        <h3 className="text-gray-900 font-serif text-base leading-snug line-clamp-2 group-hover:text-gold transition-colors">
           {listing.title}
         </h3>
 
@@ -107,7 +107,7 @@ export default function PublicListingCard({ listing }: PublicListingCardProps) {
 
         {/* Price */}
         <div className="pt-2 border-t border-gray-100">
-          <p className="text-[#c5a059] font-serif text-lg font-medium">
+          <p className="text-gold font-serif text-lg font-medium">
             {formattedPrice}
           </p>
           {listing.listingType === "rent" && (

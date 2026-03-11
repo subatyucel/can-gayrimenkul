@@ -29,7 +29,7 @@ export async function generateMetadata({ params }: { params: Params }) {
 
   if (!listing) return { title: "İlan Bulunamadı" };
   return {
-    title: `${listing.title}`,
+    title: `${listing.title.toUpperCase()}`,
     description: listing.description.slice(0, 155),
   };
 }

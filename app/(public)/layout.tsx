@@ -17,10 +17,10 @@ export default function PublicLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="bg-gray-50 text-gray-900 min-h-screen flex flex-col selection:bg-[#c5a059]/20">
+    <div className="bg-gray-50 text-gray-900 min-h-screen flex flex-col selection:bg-gold/20">
       <header className="border-b border-gray-200 bg-white sticky top-0 z-50 shadow-sm">
         <div className="container mx-auto px-4 max-w-7xl h-16 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-3 group">
+          <Link href="/ilanlar" className="flex items-center gap-3 group">
             <Image
               src="/logo.svg"
               width={36}
@@ -28,7 +28,7 @@ export default function PublicLayout({
               alt="Can Gayrimenkul"
               className="opacity-90 group-hover:opacity-100 transition-opacity"
             />
-            <span className="text-[#c5a059] font-serif tracking-wider text-sm uppercase hidden sm:block">
+            <span className="text-gold font-serif tracking-wider text-sm uppercase hidden sm:block">
               Can Gayrimenkul
             </span>
           </Link>
@@ -36,13 +36,13 @@ export default function PublicLayout({
           <nav className="flex items-center gap-6">
             <Link
               href="/ilanlar"
-              className="text-xs tracking-[0.3em] uppercase text-gray-500 hover:text-[#c5a059] transition-colors"
+              className="text-xs tracking-[0.3em] uppercase text-gray-500 hover:text-gold transition-colors"
             >
               İlanlar
             </Link>
             <Link
               href="/#iletisim"
-              className="text-xs tracking-[0.3em] uppercase text-gray-500 hover:text-[#c5a059] transition-colors"
+              className="text-xs tracking-[0.3em] uppercase text-gray-500 hover:text-gold transition-colors"
             >
               İletişim
             </Link>
@@ -63,23 +63,23 @@ export default function PublicLayout({
                 alt="Can Gayrimenkul"
                 className="opacity-70"
               />
-              <span className="text-[#c5a059] font-serif tracking-wider text-xs uppercase">
+              <span className="text-gold font-serif tracking-wider text-xs uppercase">
                 Can Gayrimenkul
               </span>
             </Link>
 
             <div className="flex flex-col sm:flex-row items-center gap-6 text-gray-400 text-xs">
               <div className="flex items-center gap-2">
-                <Phone className="h-3.5 w-3.5 text-[#c5a059]/60" />
+                <Phone className="h-3.5 w-3.5 text-gold/60" />
                 <Link
                   href="tel:+902323812381"
-                  className="hover:text-[#c5a059] transition-colors tracking-wider"
+                  className="hover:text-gold transition-colors tracking-wider"
                 >
                   +90 232 381 23 81
                 </Link>
               </div>
               <div className="flex items-center gap-2">
-                <MapPin className="h-3.5 w-3.5 text-[#c5a059]/60" />
+                <MapPin className="h-3.5 w-3.5 text-gold/60" />
                 <span className="tracking-wide">
                   Nergiz Mah. Karşıyaka / İZMİR
                 </span>

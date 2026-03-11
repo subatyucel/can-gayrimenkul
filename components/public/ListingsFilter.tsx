@@ -94,12 +94,12 @@ export default function ListingsFilter({ districts }: ListingsFilterProps) {
       <div className="lg:hidden flex items-center justify-between mb-4">
         <button
           onClick={() => setIsOpen(!isOpen)}
-          className="flex items-center gap-2 text-[#c5a059] border border-[#c5a059]/40 px-4 py-2 text-xs tracking-wider uppercase hover:bg-[#c5a059]/5 transition-colors rounded-sm"
+          className="flex items-center gap-2 text-gold border border-gold/40 px-4 py-2 text-xs tracking-wider uppercase hover:bg-gold/5 transition-colors rounded-sm"
         >
           <SlidersHorizontal className="h-3.5 w-3.5" />
           Filtrele
           {hasActiveFilters && (
-            <span className="bg-[#c5a059] text-white text-[10px] rounded-full w-4 h-4 flex items-center justify-center font-bold">
+            <span className="bg-gold text-white text-[10px] rounded-full w-4 h-4 flex items-center justify-center font-bold">
               !
             </span>
           )}
@@ -115,7 +115,7 @@ export default function ListingsFilter({ districts }: ListingsFilterProps) {
             setSort(e.target.value);
             applyFilters({ sirala: e.target.value });
           }}
-          className="bg-white border border-gray-200 text-gray-700 text-xs px-3 py-2 focus:outline-none focus:border-[#c5a059]/50 rounded-sm"
+          className="bg-white border border-gray-200 text-gray-700 text-xs px-3 py-2 focus:outline-none focus:border-gold/50 rounded-sm"
         >
           {SORT_OPTIONS.map((o) => (
             <option key={o.value} value={o.value}>
@@ -132,7 +132,7 @@ export default function ListingsFilter({ districts }: ListingsFilterProps) {
         <div className="border border-gray-200 bg-white p-5 space-y-5 sticky top-24 rounded-sm shadow-sm">
           {/* Header */}
           <div className="flex items-center justify-between">
-            <h2 className="text-[#c5a059] text-xs tracking-[0.4em] uppercase font-medium">
+            <h2 className="text-gold text-xs tracking-[0.4em] uppercase font-medium">
               Filtrele
             </h2>
             {hasActiveFilters && (
@@ -162,8 +162,8 @@ export default function ListingsFilter({ districts }: ListingsFilterProps) {
                   onClick={() => setListingType(opt.value)}
                   className={`py-2 text-[11px] tracking-wider uppercase transition-all border rounded-sm ${
                     listingType === opt.value
-                      ? "bg-[#c5a059] text-white border-[#c5a059] font-medium"
-                      : "bg-white text-gray-500 border-gray-200 hover:border-[#c5a059]/50 hover:text-[#c5a059]"
+                      ? "bg-gold text-white border-gold font-medium"
+                      : "bg-white text-gray-500 border-gray-200 hover:border-gold/50 hover:text-gold"
                   }`}
                 >
                   {opt.label}
@@ -184,7 +184,7 @@ export default function ListingsFilter({ districts }: ListingsFilterProps) {
                 setNeighborhoodId("");
                 setNeighborhoods([]);
               }}
-              className="w-full bg-white border border-gray-200 text-gray-700 text-xs px-3 py-2.5 focus:outline-none focus:border-[#c5a059]/50 transition-colors rounded-sm"
+              className="w-full bg-white border border-gray-200 text-gray-700 text-xs px-3 py-2.5 focus:outline-none focus:border-gold/50 transition-colors rounded-sm"
             >
               <option value="">Tüm İlçeler</option>
               {districts.map((d) => (
@@ -204,7 +204,7 @@ export default function ListingsFilter({ districts }: ListingsFilterProps) {
               value={neighborhoodId}
               onChange={(e) => setNeighborhoodId(e.target.value)}
               disabled={!districtId || neighborhoods.length === 0}
-              className="w-full bg-white border border-gray-200 text-gray-700 text-xs px-3 py-2.5 focus:outline-none focus:border-[#c5a059]/50 transition-colors rounded-sm disabled:opacity-40 disabled:cursor-not-allowed"
+              className="w-full bg-white border border-gray-200 text-gray-700 text-xs px-3 py-2.5 focus:outline-none focus:border-gold/50 transition-colors rounded-sm disabled:opacity-40 disabled:cursor-not-allowed"
             >
               <option value="">Tüm Mahalleler</option>
               {neighborhoods.map((n) => (
@@ -223,7 +223,7 @@ export default function ListingsFilter({ districts }: ListingsFilterProps) {
             <select
               value={roomCount}
               onChange={(e) => setRoomCount(e.target.value)}
-              className="w-full bg-white border border-gray-200 text-gray-700 text-xs px-3 py-2.5 focus:outline-none focus:border-[#c5a059]/50 transition-colors rounded-sm"
+              className="w-full bg-white border border-gray-200 text-gray-700 text-xs px-3 py-2.5 focus:outline-none focus:border-gold/50 transition-colors rounded-sm"
             >
               <option value="">Tümü</option>
               {featureOptions.ROOM.map((r) => (
@@ -245,14 +245,14 @@ export default function ListingsFilter({ districts }: ListingsFilterProps) {
                 placeholder="Min"
                 value={minPrice}
                 onChange={(e) => setMinPrice(e.target.value)}
-                className="w-full bg-white border border-gray-200 text-gray-700 text-xs px-3 py-2.5 focus:outline-none focus:border-[#c5a059]/50 transition-colors rounded-sm placeholder:text-gray-300"
+                className="w-full bg-white border border-gray-200 text-gray-700 text-xs px-3 py-2.5 focus:outline-none focus:border-gold/50 transition-colors rounded-sm placeholder:text-gray-300"
               />
               <input
                 type="number"
                 placeholder="Max"
                 value={maxPrice}
                 onChange={(e) => setMaxPrice(e.target.value)}
-                className="w-full bg-white border border-gray-200 text-gray-700 text-xs px-3 py-2.5 focus:outline-none focus:border-[#c5a059]/50 transition-colors rounded-sm placeholder:text-gray-300"
+                className="w-full bg-white border border-gray-200 text-gray-700 text-xs px-3 py-2.5 focus:outline-none focus:border-gold/50 transition-colors rounded-sm placeholder:text-gray-300"
               />
             </div>
           </div>
@@ -265,7 +265,7 @@ export default function ListingsFilter({ districts }: ListingsFilterProps) {
             <select
               value={sort}
               onChange={(e) => setSort(e.target.value)}
-              className="w-full bg-white border border-gray-200 text-gray-700 text-xs px-3 py-2.5 focus:outline-none focus:border-[#c5a059]/50 transition-colors rounded-sm"
+              className="w-full bg-white border border-gray-200 text-gray-700 text-xs px-3 py-2.5 focus:outline-none focus:border-gold/50 transition-colors rounded-sm"
             >
               {SORT_OPTIONS.map((o) => (
                 <option key={o.value} value={o.value}>
@@ -279,7 +279,7 @@ export default function ListingsFilter({ districts }: ListingsFilterProps) {
           <button
             onClick={() => applyFilters()}
             disabled={isPending}
-            className="w-full bg-[#c5a059] hover:bg-[#b08d4a] text-white text-xs tracking-[0.3em] uppercase py-3 font-medium transition-all duration-300 rounded-sm disabled:opacity-60 disabled:cursor-not-allowed"
+            className="w-full bg-gold hover:bg-[#b08d4a] text-white text-xs tracking-[0.3em] uppercase py-3 font-medium transition-all duration-300 rounded-sm disabled:opacity-60 disabled:cursor-not-allowed"
           >
             {isPending ? "Aranıyor..." : "Filtrele"}
           </button>
