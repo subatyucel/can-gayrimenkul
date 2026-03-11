@@ -144,7 +144,6 @@ export async function deleteListing(listingId: string) {
     return { error: "Bu ilanı silme yetkiniz bulunmamaktadır!" };
   }
 
-  // Cloudinary'deki fotoğrafları sil
   await cloudinary.api
     .delete_resources_by_prefix(`listings/${listingId}`)
     .catch(() => {});
@@ -234,163 +233,164 @@ export async function getListingBySlug(slug: string) {
   });
 }
 
-export async function createListing(formData: FormData) {
-  const user = await getCurrentUser();
-  if (!user) return { error: "Oturum bulunamadı! Lütfen yeniden giriş yapın." };
+type ListingFields = {
+  title: string;
+  description: string;
+  price: number;
+  listingType: string;
+  roomCount: string;
+  netSquareMeters: number;
+  grossSquareMeters: number;
+  buildingAge: number;
+  floorAt: string;
+  totalFloor: number;
+  bathroomCount: number;
+  kitchenType: string;
+  balcony: boolean;
+  elevator: boolean;
+  parking: string;
+  furnished: boolean;
+  dues: number;
+  creditworthy: boolean;
+  heating: string;
+  districtId: number;
+  neighborhoodId: number;
+  expireDate: Date;
+};
 
-  const title = (formData.get("title") as string)?.trim();
-  const description = (formData.get("description") as string)?.trim();
-  const price = parseFloat(formData.get("price") as string);
-  const listingType = formData.get("listingType") as string;
-  const roomCount = formData.get("roomCount") as string;
-  const netSquareMeters = parseInt(formData.get("netSquareMeters") as string);
-  const grossSquareMeters = parseInt(
-    formData.get("grossSquareMeters") as string,
-  );
-  const buildingAge = parseInt(formData.get("buildingAge") as string);
-  const floorAt = formData.get("floorAt") as string;
-  const totalFloor = parseInt(formData.get("totalFloor") as string);
-  const bathroomCount = parseInt(formData.get("bathroomCount") as string);
-  const kitchenType = formData.get("kitchenType") as string;
-  const balcony = formData.get("balcony") === "on";
-  const elevator = formData.get("elevator") === "on";
-  const parking = formData.get("parking") as string;
-  const furnished = formData.get("furnished") === "on";
-  const dues = parseInt(formData.get("dues") as string) || 0;
-  const creditworthy = formData.get("creditworthy") === "on";
-  const heating = formData.get("heating") as string;
-  const districtId = parseInt(formData.get("districtId") as string);
-  const neighborhoodId = parseInt(formData.get("neighborhoodId") as string);
-  const expireDate = new Date(formData.get("expireDate") as string);
+function parseListingFormData(formData: FormData): ListingFields {
+  return {
+    title: (formData.get("title") as string)?.trim(),
+    description: (formData.get("description") as string)?.trim(),
+    price: parseFloat(formData.get("price") as string),
+    listingType: formData.get("listingType") as string,
+    roomCount: formData.get("roomCount") as string,
+    netSquareMeters: parseInt(formData.get("netSquareMeters") as string),
+    grossSquareMeters: parseInt(formData.get("grossSquareMeters") as string),
+    buildingAge: parseInt(formData.get("buildingAge") as string),
+    floorAt: formData.get("floorAt") as string,
+    totalFloor: parseInt(formData.get("totalFloor") as string),
+    bathroomCount: parseInt(formData.get("bathroomCount") as string),
+    kitchenType: formData.get("kitchenType") as string,
+    balcony: formData.get("balcony") === "on",
+    elevator: formData.get("elevator") === "on",
+    parking: formData.get("parking") as string,
+    furnished: formData.get("furnished") === "on",
+    dues: parseInt(formData.get("dues") as string) || 0,
+    creditworthy: formData.get("creditworthy") === "on",
+    heating: formData.get("heating") as string,
+    districtId: parseInt(formData.get("districtId") as string),
+    neighborhoodId: parseInt(formData.get("neighborhoodId") as string),
+    expireDate: new Date(formData.get("expireDate") as string),
+  };
+}
 
+function validateListingFields(data: ListingFields): string | null {
   if (
-    !title ||
-    !description ||
-    !listingType ||
-    !roomCount ||
-    !kitchenType ||
-    !parking ||
-    !heating ||
-    !floorAt
+    !data.title ||
+    !data.description ||
+    !data.listingType ||
+    !data.roomCount ||
+    !data.kitchenType ||
+    !data.parking ||
+    !data.heating ||
+    !data.floorAt
   ) {
-    return { error: "Lütfen tüm zorunlu alanları doldurun!" };
+    return "Lütfen tüm zorunlu alanları doldurun!";
   }
+  if (isNaN(data.price) || data.price <= 0) return "Geçerli bir fiyat girin!";
+  if (isNaN(data.districtId) || isNaN(data.neighborhoodId))
+    return "İlçe ve mahalle seçin!";
+  if (isNaN(data.netSquareMeters) || isNaN(data.grossSquareMeters))
+    return "Geçerli metrekare değerleri girin!";
+  if (isNaN(data.expireDate.getTime()))
+    return "Geçerli bir son yayın tarihi girin!";
+  return null;
+}
 
-  if (isNaN(price) || price <= 0) return { error: "Geçerli bir fiyat girin!" };
-  if (isNaN(districtId) || isNaN(neighborhoodId))
-    return { error: "İlçe ve mahalle seçin!" };
-  if (isNaN(netSquareMeters) || isNaN(grossSquareMeters))
-    return { error: "Geçerli metrekare değerleri girin!" };
-  if (isNaN(expireDate.getTime()))
-    return { error: "Geçerli bir son yayın tarihi girin!" };
-
-  // Fotoğrafları al ve doğrula
-  const images = formData.getAll("images") as File[];
-  const validImages = images.filter((f) => f.size > 0);
-
-  if (validImages.length === 0) {
-    return { error: "En az bir fotoğraf yüklemelisiniz!" };
-  }
-
-  if (validImages.length > 10) {
-    return { error: "En fazla 10 fotoğraf yükleyebilirsiniz!" };
-  }
-
-  for (const img of validImages) {
-    if (img.size > 5 * 1024 * 1024) {
-      return { error: "Her fotoğraf en fazla 5 MB olabilir!" };
-    }
-    if (!img.type.startsWith("image/")) {
-      return { error: "Sadece görsel dosyaları yükleyebilirsiniz!" };
-    }
-  }
-
-  const baseSlug = slugify(title, { lower: true, strict: true, locale: "tr" });
-
-  try {
-    // İlanı oluştur
-    const listing = await prisma.listing.create({
-      data: {
-        title,
-        description,
-        price,
-        listingType: listingType as "sale" | "rent",
-        roomCount,
-        netSquareMeters,
-        grossSquareMeters,
-        buildingAge,
-        floorAt,
-        totalFloor,
-        bathroomCount,
-        kitchenType,
-        balcony,
-        elevator,
-        parking,
-        furnished,
-        dues,
-        creditworthy,
-        heating,
-        slug: baseSlug,
-        expireDate,
-        districtId,
-        neighborhoodId,
-        userId: user.id,
-      },
-      select: { id: true, listingNumber: true },
-    });
-
-    // Slug'ı listingNumber ile güncelle
-    await prisma.listing.update({
-      where: { id: listing.id },
-      data: { slug: `${baseSlug}-${listing.listingNumber}` },
-    });
-
-    // Fotoğrafları Cloudinary'ye yükle
-    const imageUrls: string[] = [];
-
-    for (const file of validImages) {
-      const bytes = await file.arrayBuffer();
-      const buffer = Buffer.from(bytes);
-
-      const result = await new Promise<{ secure_url: string }>(
-        (resolve, reject) => {
-          cloudinary.uploader
-            .upload_stream(
-              {
-                folder: `listings/${listing.id}`,
-                resource_type: "image",
-              },
-              (error, result) => {
-                if (error || !result) reject(error);
-                else resolve(result);
-              },
-            )
-            .end(buffer);
-        },
-      );
-
-      imageUrls.push(result.secure_url);
-    }
-
-    // Image kayıtlarını veritabanına ekle
-    await prisma.image.createMany({
-      data: imageUrls.map((url) => ({
-        url,
-        listingId: listing.id,
-      })),
-    });
-  } catch (e) {
-    console.log("İlan oluştururken bir hata", e);
-    return { error: "İlan oluşturulurken bir hata oluştu!" };
-  }
-
-  revalidatePath("/admin/ilanlar");
-  return { success: true };
+async function uploadImageToCloudinary(
+  file: File,
+  folder: string,
+): Promise<string> {
+  const buffer = Buffer.from(await file.arrayBuffer());
+  const result = await new Promise<{ secure_url: string }>(
+    (resolve, reject) => {
+      cloudinary.uploader
+        .upload_stream({ folder, resource_type: "image" }, (error, result) => {
+          if (error || !result) reject(error);
+          else resolve(result);
+        })
+        .end(buffer);
+    },
+  );
+  return result.secure_url;
 }
 
 function extractCloudinaryPublicId(url: string): string {
   const match = url.match(/\/upload\/(?:v\d+\/)?(.+)\.[^.]+$/);
   return match ? match[1] : "";
+}
+
+export async function createListing(formData: FormData) {
+  const user = await getCurrentUser();
+  if (!user) return { error: "Oturum bulunamadı! Lütfen yeniden giriş yapın." };
+
+  const fields = parseListingFormData(formData);
+  const validationError = validateListingFields(fields);
+  if (validationError) return { error: validationError };
+
+  const images = formData.getAll("images") as File[];
+  const validImages = images.filter((f) => f.size > 0);
+
+  if (validImages.length === 0)
+    return { error: "En az bir fotoğraf yüklemelisiniz!" };
+  if (validImages.length > 10)
+    return { error: "En fazla 10 fotoğraf yükleyebilirsiniz!" };
+
+  for (const img of validImages) {
+    if (img.size > 5 * 1024 * 1024)
+      return { error: "Her fotoğraf en fazla 5 MB olabilir!" };
+    if (!img.type.startsWith("image/"))
+      return { error: "Sadece görsel dosyaları yükleyebilirsiniz!" };
+  }
+
+  const baseSlug = slugify(fields.title, {
+    lower: true,
+    strict: true,
+    locale: "tr",
+  });
+
+  try {
+    const listing = await prisma.listing.create({
+      data: {
+        ...fields,
+        listingType: fields.listingType as "sale" | "rent",
+        slug: baseSlug,
+        userId: user.id,
+      },
+      select: { id: true, listingNumber: true },
+    });
+
+    await prisma.listing.update({
+      where: { id: listing.id },
+      data: { slug: `${baseSlug}-${listing.listingNumber}` },
+    });
+
+    const imageUrls = await Promise.all(
+      validImages.map((file) =>
+        uploadImageToCloudinary(file, `listings/${listing.id}`),
+      ),
+    );
+
+    await prisma.image.createMany({
+      data: imageUrls.map((url) => ({ url, listingId: listing.id })),
+    });
+  } catch {
+    return { error: "İlan oluşturulurken bir hata oluştu!" };
+  }
+
+  revalidatePath("/admin/ilanlar");
+  return { success: true };
 }
 
 export async function updateListing(listingId: string, formData: FormData) {
@@ -403,59 +403,15 @@ export async function updateListing(listingId: string, formData: FormData) {
   });
 
   if (!listing) return { error: "İlan bulunamadı!" };
-
   if (user.role === "admin" && listing.userId !== user.id) {
     return { error: "Bu ilanı düzenleme yetkiniz bulunmamaktadır!" };
   }
 
-  const title = (formData.get("title") as string)?.trim();
-  const description = (formData.get("description") as string)?.trim();
-  const price = parseFloat(formData.get("price") as string);
-  const listingType = formData.get("listingType") as string;
-  const roomCount = formData.get("roomCount") as string;
-  const netSquareMeters = parseInt(formData.get("netSquareMeters") as string);
-  const grossSquareMeters = parseInt(
-    formData.get("grossSquareMeters") as string,
-  );
-  const buildingAge = parseInt(formData.get("buildingAge") as string);
-  const floorAt = formData.get("floorAt") as string;
-  const totalFloor = parseInt(formData.get("totalFloor") as string);
-  const bathroomCount = parseInt(formData.get("bathroomCount") as string);
-  const kitchenType = formData.get("kitchenType") as string;
-  const balcony = formData.get("balcony") === "on";
-  const elevator = formData.get("elevator") === "on";
-  const parking = formData.get("parking") as string;
-  const furnished = formData.get("furnished") === "on";
-  const dues = parseInt(formData.get("dues") as string) || 0;
-  const creditworthy = formData.get("creditworthy") === "on";
-  const heating = formData.get("heating") as string;
-  const districtId = parseInt(formData.get("districtId") as string);
-  const neighborhoodId = parseInt(formData.get("neighborhoodId") as string);
-  const expireDate = new Date(formData.get("expireDate") as string);
-
-  if (
-    !title ||
-    !description ||
-    !listingType ||
-    !roomCount ||
-    !kitchenType ||
-    !parking ||
-    !heating ||
-    !floorAt
-  ) {
-    return { error: "Lütfen tüm zorunlu alanları doldurun!" };
-  }
-
-  if (isNaN(price) || price <= 0) return { error: "Geçerli bir fiyat girin!" };
-  if (isNaN(districtId) || isNaN(neighborhoodId))
-    return { error: "İlçe ve mahalle seçin!" };
-  if (isNaN(netSquareMeters) || isNaN(grossSquareMeters))
-    return { error: "Geçerli metrekare değerleri girin!" };
-  if (isNaN(expireDate.getTime()))
-    return { error: "Geçerli bir son yayın tarihi girin!" };
+  const fields = parseListingFormData(formData);
+  const validationError = validateListingFields(fields);
+  if (validationError) return { error: validationError };
 
   try {
-    // Silinecek fotoğrafları işle
     const deletedImageIds = formData.getAll("deletedImageId") as string[];
     if (deletedImageIds.length > 0) {
       const imagesToDelete = await prisma.image.findMany({
@@ -463,97 +419,53 @@ export async function updateListing(listingId: string, formData: FormData) {
         select: { id: true, url: true },
       });
 
-      for (const img of imagesToDelete) {
-        const publicId = extractCloudinaryPublicId(img.url);
-        if (publicId) {
-          await cloudinary.uploader.destroy(publicId).catch(() => {});
-        }
-      }
+      await Promise.all(
+        imagesToDelete.map((img) => {
+          const publicId = extractCloudinaryPublicId(img.url);
+          return publicId
+            ? cloudinary.uploader.destroy(publicId).catch(() => {})
+            : Promise.resolve();
+        }),
+      );
 
-      await prisma.image.deleteMany({
-        where: { id: { in: deletedImageIds } },
-      });
+      await prisma.image.deleteMany({ where: { id: { in: deletedImageIds } } });
     }
 
-    // Yeni fotoğrafları yükle
-    const newImages = formData.getAll("images") as File[];
-    const validNewImages = newImages.filter((f) => f.size > 0);
+    const validNewImages = (formData.getAll("images") as File[]).filter(
+      (f) => f.size > 0,
+    );
 
     if (validNewImages.length > 0) {
       for (const img of validNewImages) {
-        if (img.size > 5 * 1024 * 1024) {
+        if (img.size > 5 * 1024 * 1024)
           return { error: "Her fotoğraf en fazla 5 MB olabilir!" };
-        }
-        if (!img.type.startsWith("image/")) {
+        if (!img.type.startsWith("image/"))
           return { error: "Sadece görsel dosyaları yükleyebilirsiniz!" };
-        }
       }
 
-      const remainingCount = await prisma.image.count({
-        where: { listingId },
-      });
-      if (remainingCount + validNewImages.length > 10) {
+      const remainingCount = await prisma.image.count({ where: { listingId } });
+      if (remainingCount + validNewImages.length > 10)
         return { error: "En fazla 10 fotoğraf yükleyebilirsiniz!" };
-      }
 
-      const imageUrls: string[] = [];
-      for (const file of validNewImages) {
-        const bytes = await file.arrayBuffer();
-        const buffer = Buffer.from(bytes);
-
-        const result = await new Promise<{ secure_url: string }>(
-          (resolve, reject) => {
-            cloudinary.uploader
-              .upload_stream(
-                { folder: `listings/${listingId}`, resource_type: "image" },
-                (error, result) => {
-                  if (error || !result) reject(error);
-                  else resolve(result);
-                },
-              )
-              .end(buffer);
-          },
-        );
-
-        imageUrls.push(result.secure_url);
-      }
+      const imageUrls = await Promise.all(
+        validNewImages.map((file) =>
+          uploadImageToCloudinary(file, `listings/${listingId}`),
+        ),
+      );
 
       await prisma.image.createMany({
         data: imageUrls.map((url) => ({ url, listingId })),
       });
     }
 
-    // En az 1 fotoğraf kaldığını doğrula
     const totalImages = await prisma.image.count({ where: { listingId } });
-    if (totalImages === 0) {
-      return { error: "En az bir fotoğraf olmalıdır!" };
-    }
+    if (totalImages === 0) return { error: "En az bir fotoğraf olmalıdır!" };
 
     await prisma.listing.update({
       where: { id: listingId },
       data: {
-        title,
-        description,
-        price,
-        listingType: listingType as "sale" | "rent",
-        roomCount,
-        netSquareMeters,
-        grossSquareMeters,
-        buildingAge,
-        floorAt,
-        totalFloor,
-        bathroomCount,
-        kitchenType,
-        balcony,
-        elevator,
-        parking,
-        furnished,
-        dues,
-        creditworthy,
-        heating,
-        expireDate,
-        districtId,
-        neighborhoodId,
+        ...fields,
+        listingType: fields.listingType as "sale" | "rent",
       },
     });
   } catch {
