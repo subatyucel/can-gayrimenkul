@@ -1,5 +1,5 @@
+import { getCurrentUser } from "@/actions/auth";
 import { getListings } from "@/actions/listing";
-import { getCurrentUser } from "@/actions/settings";
 import { ListingsTable } from "@/components/admin/ListingsTable";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";

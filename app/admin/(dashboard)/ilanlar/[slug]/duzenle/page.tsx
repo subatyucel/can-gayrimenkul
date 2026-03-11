@@ -1,7 +1,7 @@
 import { redirect, notFound } from "next/navigation";
-import { getCurrentUser } from "@/actions/settings";
 import { getDistricts, getListingBySlug } from "@/actions/listing";
-import { ListingForm } from "@/components/admin/ListingForm";
+import { ListingForm } from "@/components/admin/listing/ListingForm";
+import { getCurrentUser } from "@/actions/auth";
 
 interface Props {
   params: Promise<{ slug: string }>;

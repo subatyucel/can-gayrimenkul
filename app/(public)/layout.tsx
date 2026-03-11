@@ -2,6 +2,15 @@ import Link from "next/link";
 import Image from "next/image";
 import { MapPin, Phone } from "lucide-react";
 
+export const metadata = {
+  title: {
+    default: "Can Gayrimenkul",
+    template: "%s | Can Gayrimenkul",
+  },
+  description:
+    "Can Gayrimenkul portföyündeki satılık ve kiralık gayrimenkul ilanlarını inceleyin.",
+};
+
 export default function PublicLayout({
   children,
 }: {

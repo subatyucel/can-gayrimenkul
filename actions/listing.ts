@@ -2,9 +2,9 @@
 
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
-import { getCurrentUser } from "./settings";
 import slugify from "slugify";
 import { cloudinary } from "@/lib/cloudinary";
+import { getCurrentUser } from "./auth";
 
 export async function getListings() {
   const user = await getCurrentUser();

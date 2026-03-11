@@ -1,30 +1,6 @@
 "use server";
 import { prisma } from "@/lib/prisma";
-
-type RecentListing = {
-  id: string;
-  title: string;
-  price: number;
-  listingType: string;
-  createdAt: Date;
-  slug: string;
-};
-
-type DistrictStat = {
-  id: number | null;
-  name: string;
-  count: number;
-};
-
-type DashboardStats = {
-  forSaleTotal: number;
-  forSaleActive: number;
-  forRentTotal: number;
-  forRentActive: number;
-  listedThisMonth: number;
-  recentListings: RecentListing[];
-  districtStats: DistrictStat[];
-};
+import type { DashboardStats, DistrictStat } from "@/types/types";
 
 export async function getDashboardStats(): Promise<DashboardStats> {
   const startOfMonth = new Date();

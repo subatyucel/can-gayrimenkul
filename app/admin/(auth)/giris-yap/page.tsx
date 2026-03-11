@@ -28,6 +28,7 @@ function LoginForm() {
   const [error, setError] = useState<string | null>(null);
   const searchParams = useSearchParams();
   const isReset = searchParams.get("reset") === "success";
+  const isRegistered = searchParams.get("register") === "true";
 
   async function handleSubmit(formData: FormData) {
     setError(null);
@@ -56,6 +57,13 @@ function LoginForm() {
                 {isReset && (
                   <div className="bg-green-500/15 text-green-700 text-sm p-3 rounded-md text-center">
                     Şifreniz başarıyla sıfırlandı. Yeni şifrenizle giriş
+                    yapabilirsiniz.
+                  </div>
+                )}
+
+                {isRegistered && (
+                  <div className="bg-green-500/15 text-green-700 text-sm p-3 rounded-md text-center">
+                    Başarıyla kayıt oldunuz. Bilgilerinizi doldurarak giriş
                     yapabilirsiniz.
                   </div>
                 )}

@@ -12,23 +12,10 @@ import {
 import { Button } from "@/components/ui/button";
 import { Pencil, Trash2, Power } from "lucide-react";
 import { useRouter } from "next/navigation";
-
-interface Listing {
-  id: string;
-  listingNumber: number;
-  title: string;
-  price: number;
-  listingType: string;
-  isActive: boolean;
-  slug: string;
-  createdAt: Date;
-  district: { name: string };
-  neighborhood: { name: string };
-  user: { fullName: string };
-}
+import type { AdminListing } from "@/types/types";
 
 interface ListingCardProps {
-  listing: Listing;
+  listing: AdminListing;
   isOwner: boolean;
   isDisabled: boolean;
   onToggle: () => void;

@@ -3,9 +3,10 @@
 import Image from "next/image";
 import { useState } from "react";
 import { ChevronLeft, ChevronRight, Building2 } from "lucide-react";
+import type { ListingImage } from "@/types/types";
 
 type ListingGalleryProps = {
-  images: { id: string; url: string }[];
+  images: ListingImage[];
   title: string;
 };
 

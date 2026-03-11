@@ -1,4 +1,4 @@
-import { AdminSidebar } from "@/components/admin/AdminSidebar";
+import { AdminSidebar } from "@/components/admin/sidebar/AdminSidebar";
 import { ReactNode } from "react";
 import {
   Sheet,

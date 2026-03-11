@@ -22,12 +22,14 @@ import ListingGallery from "@/components/public/ListingGallery";
 
 type Params = Promise<{ slug: string }>;
 
+let listing;
 export async function generateMetadata({ params }: { params: Params }) {
   const { slug } = await params;
-  const listing = await getPublicListingBySlug(slug);
-  if (!listing) return { title: "İlan Bulunamadı | Can Gayrimenkul" };
+  listing = await getPublicListingBySlug(slug);
+
+  if (!listing) return { title: "İlan Bulunamadı" };
   return {
-    title: `${listing.title} | Can Gayrimenkul`,
+    title: `${listing.title}`,
     description: listing.description.slice(0, 155),
   };
 }

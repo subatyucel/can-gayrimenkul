@@ -21,7 +21,7 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
-import { MapPinOff } from "lucide-react"; // Boş durum için ikon
+import { MapPinOff } from "lucide-react";
 
 interface DistrictChartData {
   district: string;

@@ -13,24 +13,11 @@ import {
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { deleteListing, toggleListingStatus } from "@/actions/listing";
-import { ListingCard } from "./ListingCard";
-
-interface Listing {
-  id: string;
-  listingNumber: number;
-  title: string;
-  price: number;
-  listingType: string;
-  isActive: boolean;
-  slug: string;
-  createdAt: Date;
-  district: { name: string };
-  neighborhood: { name: string };
-  user: { fullName: string };
-}
+import { ListingCard } from "./listing/ListingCard";
+import type { AdminListing } from "@/types/types";
 
 interface ListingsTableProps {
-  data: Listing[];
+  data: AdminListing[];
   isOwner: boolean;
 }
 

@@ -2,33 +2,10 @@
 
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcrypt";
-import { cookies } from "next/headers";
-import { jwtVerify, SignJWT } from "jose";
+import { SignJWT } from "jose";
+import { getCurrentUser, getCurrentUserId } from "./auth";
 
 const SECRET = new TextEncoder().encode(process.env.JWT_SECRET);
-
-export async function getCurrentUserId(): Promise<string | null> {
-  const cookieStore = await cookies();
-  const token = cookieStore.get("admin_session")?.value;
-  if (!token) return null;
-
-  try {
-    const { payload } = await jwtVerify(token, SECRET);
-    return payload.userId as string;
-  } catch {
-    return null;
-  }
-}
-
-export async function getCurrentUser() {
-  const userId = await getCurrentUserId();
-  if (!userId) return null;
-
-  return prisma.user.findUnique({
-    where: { id: userId },
-    select: { id: true, email: true, fullName: true, role: true },
-  });
-}
 
 export async function changePassword(formData: FormData) {
   const userId = await getCurrentUserId();
@@ -99,10 +76,9 @@ export async function changeEmail(formData: FormData) {
 }
 
 export async function createInvitation() {
-  const userId = await getCurrentUserId();
-  if (!userId) return { error: "Oturum bulunamadı!" };
+  const user = await getCurrentUser();
+  if (!user) return { error: "Oturum bulunamadı!" };
 
-  const user = await prisma.user.findUnique({ where: { id: userId } });
   if (!user || user.role !== "owner") {
     return {
       error: "Bu işlemi yalnızca Owner yetkisine sahip kullanıcılar yapabilir!",
@@ -114,7 +90,7 @@ export async function createInvitation() {
     .setExpirationTime("24h")
     .sign(SECRET);
 
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
   const inviteLink = `${baseUrl}/admin/kayit-ol/${token}`;
 
   return { success: true, link: inviteLink };

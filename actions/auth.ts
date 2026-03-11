@@ -22,6 +22,7 @@ export async function login(formData: FormData) {
   const password = formData.get("password") as string;
 
   const user = await prisma.user.findUnique({ where: { email } });
+
   if (!user || !(await bcrypt.compare(password, user.password))) {
     return { error: "Giriş bilgileri hatalı!" };
   }
@@ -97,7 +98,7 @@ export async function registerWithInvite(formData: FormData) {
     }),
   ]);
 
-  redirect("/admin/giris-yap");
+  redirect("/admin/giris-yap?register=true");
 }
 
 export async function requestPasswordReset(formData: FormData) {
@@ -120,7 +121,7 @@ export async function requestPasswordReset(formData: FormData) {
     .setExpirationTime("30m")
     .sign(SECRET);
 
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
   const resetLink = `${baseUrl}/admin/sifremi-unuttum/${token}`;
 
   await transporter.sendMail({
@@ -181,4 +182,27 @@ export async function resetPasswordWithToken(formData: FormData) {
   });
 
   redirect("/admin/giris-yap?reset=success");
+}
+
+export async function getCurrentUserId(): Promise<string | null> {
+  const cookieStore = await cookies();
+  const token = cookieStore.get("admin_session")?.value;
+  if (!token) return null;
+
+  try {
+    const { payload } = await jwtVerify(token, SECRET);
+    return payload.userId as string;
+  } catch {
+    return null;
+  }
+}
+
+export async function getCurrentUser() {
+  const userId = await getCurrentUserId();
+  if (!userId) return null;
+
+  return prisma.user.findUnique({
+    where: { id: userId },
+    select: { id: true, email: true, fullName: true, role: true },
+  });
 }

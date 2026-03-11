@@ -2,28 +2,12 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import {
-  LayoutDashboard,
-  Home,
-  PlusCircle,
-  Settings,
-  LogOut,
-  Building2,
-} from "lucide-react";
-import { cn } from "@/lib/utils";
+import { LogOut, Building2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { logout } from "@/actions/auth";
+import { menuItems } from "@/lib/constans";
+import NavLinkItem from "./NavLinkItem";
 
-const menuItems = [
-  { name: "Dashboard", href: "/admin", icon: LayoutDashboard },
-  { name: "İlanlarım", href: "/admin/ilanlar", icon: Home },
-  {
-    name: "Yeni İlan Ekle",
-    href: "/admin/ilanlar/ilan-olustur",
-    icon: PlusCircle,
-  },
-  { name: "Ayarlar", href: "/admin/ayarlar", icon: Settings },
-];
 interface AdminSidebarProps {
   isMobile?: boolean;
 }
@@ -51,20 +35,13 @@ export function AdminSidebar({ isMobile = false }: AdminSidebarProps) {
         {menuItems.map((item) => {
           const isActive = pathname === item.href;
           return (
-            <Link key={item.href} href={item.href}>
-              <Button
-                variant={isActive ? "secondary" : "ghost"}
-                className={cn(
-                  "w-full justify-start gap-3 px-3 cursor-pointer",
-                  isActive
-                    ? "bg-accent text-accent-foreground font-medium"
-                    : "text-muted-foreground",
-                )}
-              >
-                <item.icon className="h-5 w-5" />
-                {item.name}
-              </Button>
-            </Link>
+            <NavLinkItem
+              key={item.href}
+              href={item.href}
+              name={item.name}
+              isActive={isActive}
+              Icon={item.icon}
+            />
           );
         })}
       </nav>

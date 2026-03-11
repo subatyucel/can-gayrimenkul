@@ -10,16 +10,10 @@ import {
 } from "@/components/ui/table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useRouter } from "next/navigation";
+import type { RecentListing } from "@/types/types";
 
 interface RecentListingsTableProps {
-  data: {
-    id: string;
-    title: string;
-    price: number;
-    listingType: string;
-    createdAt: Date;
-    slug: string;
-  }[];
+  data: RecentListing[];
 }
 
 export function RecentListingsTable({ data }: RecentListingsTableProps) {

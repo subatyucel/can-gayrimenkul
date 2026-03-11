@@ -7,9 +7,7 @@ import { Search } from "lucide-react";
 type SearchParams = Promise<{ [key: string]: string | undefined }>;
 
 export const metadata = {
-  title: "İlanlar | Can Gayrimenkul",
-  description:
-    "Can Gayrimenkul portföyündeki satılık ve kiralık gayrimenkul ilanlarını inceleyin.",
+  title: "İlanlar",
 };
 
 export default async function IlanlarPage({

@@ -4,10 +4,8 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 import { SlidersHorizontal, X, ChevronDown } from "lucide-react";
 import { getNeighborhoods } from "@/actions/listing";
-import { ROOM_OPTIONS } from "@/lib/constans";
-
-type District = { id: number; name: string };
-type Neighborhood = { id: number; name: string };
+import { featureOptions } from "@/lib/constans";
+import type { District, Neighborhood } from "@/types/types";
 
 type ListingsFilterProps = {
   districts: District[];
@@ -228,7 +226,7 @@ export default function ListingsFilter({ districts }: ListingsFilterProps) {
               className="w-full bg-white border border-gray-200 text-gray-700 text-xs px-3 py-2.5 focus:outline-none focus:border-[#c5a059]/50 transition-colors rounded-sm"
             >
               <option value="">Tümü</option>
-              {ROOM_OPTIONS.map((r) => (
+              {featureOptions.ROOM.map((r) => (
                 <option key={r} value={r}>
                   {r}
                 </option>

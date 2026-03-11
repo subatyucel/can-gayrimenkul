@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
-import { getCurrentUser } from "@/actions/settings";
 import { SettingsPage } from "@/components/admin/SettingsPage";
+import { getCurrentUser } from "@/actions/auth";
 
 export default async function Page() {
   const user = await getCurrentUser();

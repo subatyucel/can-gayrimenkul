@@ -1,15 +1,12 @@
 import { BadgeCent, BadgeDollarSign, Check, CheckCheck } from "lucide-react";
 import StatCard from "./StatCard";
+import type { DashboardStats } from "@/types/types";
 
-type Stats = {
-  forSaleTotal: number;
-  forSaleActive: number;
-  forRentTotal: number;
-  forRentActive: number;
-  listedThisMonth: number;
-};
-
-export default async function StatCardGrid({ stats }: { stats: Stats }) {
+export default async function StatCardGrid({
+  stats,
+}: {
+  stats: DashboardStats;
+}) {
   const {
     forSaleTotal,
     forSaleActive,
