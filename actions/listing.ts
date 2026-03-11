@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import slugify from "slugify";
 import { cloudinary } from "@/lib/cloudinary";
 import { getCurrentUser } from "./auth";
+import { ListingFields } from "@/types/types";
 
 export async function getListings() {
   const user = await getCurrentUser();
@@ -232,31 +233,6 @@ export async function getListingBySlug(slug: string) {
     },
   });
 }
-
-type ListingFields = {
-  title: string;
-  description: string;
-  price: number;
-  listingType: string;
-  roomCount: string;
-  netSquareMeters: number;
-  grossSquareMeters: number;
-  buildingAge: number;
-  floorAt: string;
-  totalFloor: number;
-  bathroomCount: number;
-  kitchenType: string;
-  balcony: boolean;
-  elevator: boolean;
-  parking: string;
-  furnished: boolean;
-  dues: number;
-  creditworthy: boolean;
-  heating: string;
-  districtId: number;
-  neighborhoodId: number;
-  expireDate: Date;
-};
 
 function parseListingFormData(formData: FormData): ListingFields {
   return {

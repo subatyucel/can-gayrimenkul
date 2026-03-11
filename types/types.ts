@@ -22,7 +22,7 @@ export type BaseListing = {
 
 export interface DetailedListing extends BaseListing {
   description: string;
-  expireDate: Date | string;
+  expireDate: Date;
   districtId: number;
   neighborhoodId: number;
   roomCount: string;
@@ -42,6 +42,8 @@ export interface DetailedListing extends BaseListing {
   dues: number;
   images: ListingImage[];
 }
+
+export type ListingFields = Omit<DetailedListing, "id" | "images">;
 
 export type AdminListing = BaseListing & {
   listingNumber: number;
