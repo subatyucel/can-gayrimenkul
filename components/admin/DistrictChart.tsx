@@ -7,6 +7,7 @@ import {
   YAxis,
   CartesianGrid,
   LabelList,
+  Cell,
 } from "recharts";
 import {
   Card,
@@ -34,7 +35,12 @@ interface DistrictChartProps {
 }
 
 const chartConfig = {
-  count: { label: "İlan Sayısı", color: "hsl(var(--chart-1))" },
+  count: { label: "İlan Sayısı" },
+  "chart-1": { color: "var(--chart-1)" },
+  "chart-2": { color: "var(--chart-2)" },
+  "chart-3": { color: "var(--chart-3)" },
+  "chart-4": { color: "var(--chart-4)" },
+  "chart-5": { color: "var(--chart-5)" },
 } satisfies ChartConfig;
 
 export function DistrictChart({ data }: DistrictChartProps) {
@@ -69,6 +75,9 @@ export function DistrictChart({ data }: DistrictChartProps) {
               <XAxis dataKey="count" type="number" hide />
               <ChartTooltip content={<ChartTooltipContent hideLabel />} />
               <Bar dataKey="count" layout="vertical" radius={4} barSize={24}>
+                {data.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={entry.fill} />
+                ))}
                 <LabelList
                   dataKey="count"
                   position="right"

@@ -54,18 +54,14 @@ export default async function IlanDetayPage({ params }: { params: Params }) {
 
   return (
     <div className="bg-gray-50 min-h-screen">
-      {/* Breadcrumb */}
       <div className="bg-white border-b border-gray-200">
         <div className="container mx-auto px-4 max-w-7xl py-3">
           <nav className="flex items-center gap-1.5 text-[11px] text-gray-400 tracking-wide">
-            <Link href="/" className="hover:text-[#c5a059] transition-colors">
+            <Link href="/" className="hover:text-gold transition-colors">
               Ana Sayfa
             </Link>
             <ChevronRight className="h-3 w-3" />
-            <Link
-              href="/ilanlar"
-              className="hover:text-[#c5a059] transition-colors"
-            >
+            <Link href="/ilanlar" className="hover:text-gold transition-colors">
               İlanlar
             </Link>
             <ChevronRight className="h-3 w-3" />
@@ -77,7 +73,6 @@ export default async function IlanDetayPage({ params }: { params: Params }) {
       </div>
 
       <div className="container mx-auto px-4 max-w-7xl py-8">
-        {/* Title row */}
         <div className="mb-6 space-y-2">
           <div className="flex flex-wrap items-center gap-2">
             <span
@@ -95,7 +90,7 @@ export default async function IlanDetayPage({ params }: { params: Params }) {
           <h1 className="text-gray-900 font-serif text-2xl md:text-3xl leading-snug">
             {listing.title}
           </h1>
-          <div className="flex items-center gap-1.5 text-[#c5a059] text-sm">
+          <div className="flex items-center gap-1.5 text-gold text-sm">
             <MapPin className="h-4 w-4 shrink-0" />
             <span>
               {listing.district.name} / {listing.neighborhood.name}
@@ -103,7 +98,6 @@ export default async function IlanDetayPage({ params }: { params: Params }) {
           </div>
         </div>
 
-        {/* Main content: gallery + sidebar */}
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
           {/* Gallery */}
           <div className="lg:col-span-3">
@@ -117,7 +111,7 @@ export default async function IlanDetayPage({ params }: { params: Params }) {
               <p className="text-[10px] text-gray-400 tracking-[0.3em] uppercase mb-1">
                 {listing.listingType === "sale" ? "Satış Fiyatı" : "Aylık Kira"}
               </p>
-              <p className="text-[#c5a059] font-serif text-3xl font-semibold">
+              <p className="text-gold font-serif text-3xl font-semibold">
                 {formattedPrice}
               </p>
               {listing.dues > 0 && (
@@ -130,7 +124,6 @@ export default async function IlanDetayPage({ params }: { params: Params }) {
               )}
             </div>
 
-            {/* Key stats */}
             <div className="bg-white border border-gray-200 rounded-sm p-5 shadow-sm">
               <h2 className="text-[10px] text-gray-400 tracking-[0.3em] uppercase mb-4">
                 Temel Bilgiler
@@ -173,7 +166,6 @@ export default async function IlanDetayPage({ params }: { params: Params }) {
               </div>
             </div>
 
-            {/* Feature badges */}
             <div className="bg-white border border-gray-200 rounded-sm p-5 shadow-sm">
               <h2 className="text-[10px] text-gray-400 tracking-[0.3em] uppercase mb-4">
                 Özellikler
@@ -189,15 +181,14 @@ export default async function IlanDetayPage({ params }: { params: Params }) {
               </div>
             </div>
 
-            {/* Contact card */}
-            <div className="bg-[#c5a059] rounded-sm p-5 space-y-3">
+            <div className="bg-gold rounded-sm p-5 space-y-3">
               <p className="text-white/70 text-[10px] tracking-[0.4em] uppercase">
                 Danışman
               </p>
               <p className="text-white font-serif text-lg">Can Gayrimenkul</p>
               <a
                 href="tel:+902323812381"
-                className="flex items-center gap-2 bg-white text-[#c5a059] font-medium text-sm px-4 py-3 rounded-sm hover:bg-white/90 transition-colors justify-center"
+                className="flex items-center gap-2 bg-white text-gold font-medium text-sm px-4 py-3 rounded-sm hover:bg-white/90 transition-colors justify-center"
               >
                 <Phone className="h-4 w-4" />
                 +90 232 381 23 81
@@ -206,7 +197,6 @@ export default async function IlanDetayPage({ params }: { params: Params }) {
           </div>
         </div>
 
-        {/* Description */}
         {listing.description && (
           <div className="mt-8 bg-white border border-gray-200 rounded-sm p-6 shadow-sm">
             <h2 className="text-[10px] text-gray-400 tracking-[0.3em] uppercase mb-4">
@@ -218,7 +208,6 @@ export default async function IlanDetayPage({ params }: { params: Params }) {
           </div>
         )}
 
-        {/* Full details */}
         <div className="mt-6 bg-white border border-gray-200 rounded-sm p-6 shadow-sm">
           <h2 className="text-[10px] text-gray-400 tracking-[0.3em] uppercase mb-6">
             Detaylı Bilgiler
@@ -291,7 +280,7 @@ function StatItem({
 }) {
   return (
     <div className="flex items-start gap-2.5">
-      <span className="text-[#c5a059] mt-0.5 shrink-0">{icon}</span>
+      <span className="text-gold mt-0.5 shrink-0">{icon}</span>
       <div>
         <p className="text-[10px] text-gray-400 uppercase tracking-wider leading-none mb-0.5">
           {label}
@@ -330,7 +319,7 @@ function DetailRow({
 }) {
   return (
     <div className="flex items-center gap-3 py-3 px-4 border-b border-gray-100 last:border-b-0">
-      <span className="text-[#c5a059] shrink-0">{icon}</span>
+      <span className="text-gold shrink-0">{icon}</span>
       <span className="text-gray-400 text-xs w-24 shrink-0">{label}</span>
       <span className="text-gray-800 text-sm font-medium">{value}</span>
     </div>

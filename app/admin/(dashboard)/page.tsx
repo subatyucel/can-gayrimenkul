@@ -11,19 +11,19 @@ export default async function AdminDashboard() {
       type: "sale",
       label: "Satılık",
       value: stats.forSaleActive,
-      fill: "var(--color-chart-1)",
+      fill: "var(--chart-1)",
     },
     {
       type: "rent",
       label: "Kiralık",
       value: stats.forRentActive,
-      fill: "var(--color-chart-2)",
+      fill: "var(--chart-2)",
     },
   ];
   const districtChartData = stats.districtStats.map((item, i) => ({
     district: item.name,
     count: item.count,
-    fill: `var(--color-chart-${(i % 5) + 1})`,
+    fill: `var(--chart-${(i % 5) + 1})`,
   }));
 
   return (
