@@ -1,6 +1,6 @@
-# Can Gayrimenkul — Real Estate Listing Platform (Based in Izmir / Turkiye)
+# Can Gayrimenkul — Real Estate Portal (Based in Izmir / Turkiye)
 
-#### Video Demo:
+#### Video Demo: <https://youtu.be/7y5m1ODqQE0>
 
 ---
 
