@@ -6,6 +6,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { jwtVerify, SignJWT } from "jose";
 import nodemailer from "nodemailer";
+import { z } from "zod";
 
 const SECRET = new TextEncoder().encode(process.env.JWT_SECRET);
 
@@ -17,9 +18,19 @@ const transporter = nodemailer.createTransport({
   },
 });
 
+const LoginSchema = z.object({
+  email: z.string().email("Geçerli bir e-posta adresi girin!"),
+  password: z.string().min(1, "Şifre alanı zorunludur!"),
+});
+
 export async function login(formData: FormData) {
-  const email = formData.get("email") as string;
-  const password = formData.get("password") as string;
+  const parsed = LoginSchema.safeParse(Object.fromEntries(formData));
+
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0].message };
+  }
+
+  const { email, password } = parsed.data;
 
   const user = await prisma.user.findUnique({ where: { email } });
 
@@ -55,29 +66,27 @@ export async function logout() {
   redirect("/admin/login");
 }
 
+const RegisterSchema = z
+  .object({
+    token: z.string().min(1, "Token (davet linki değeri) gerekli!"),
+    fullName: z.string().min(2, "Ad soyad en az 2 karakter olmalıdır!"),
+    email: z.string().email("Geçerli bir e-posta adresi girin!"),
+    password: z.string().min(6, "Şifre en az 6 karakter olmalıdır!"),
+    confirmPassword: z.string(),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Şifreler eşleşmiyor!",
+    path: ["confirmPassword"],
+  });
+
 export async function registerWithInvite(formData: FormData) {
-  const token = formData.get("token") as string;
-  const fullName = formData.get("fullName") as string;
-  const email = formData.get("email") as string;
-  const password = formData.get("password") as string;
-  const confirmPassword = formData.get("confirmPassword") as string;
+  const parsed = RegisterSchema.safeParse(Object.fromEntries(formData));
 
-  if (!token || !fullName || !email || !password || !confirmPassword) {
-    return { error: "Tüm alanları doldurun!" };
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0].message };
   }
 
-  if (password.length < 6) {
-    return { error: "Şifre en az 6 karakter olmalıdır!" };
-  }
-
-  if (password !== confirmPassword) {
-    return { error: "Şifreler eşleşmiyor!" };
-  }
-
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (!emailRegex.test(email)) {
-    return { error: "Geçerli bir e-posta adresi girin!" };
-  }
+  const { token, fullName, email, password } = parsed.data;
 
   try {
     await jwtVerify(token, SECRET);
@@ -101,12 +110,18 @@ export async function registerWithInvite(formData: FormData) {
   redirect("/admin/giris-yap?register=true");
 }
 
-export async function requestPasswordReset(formData: FormData) {
-  const email = formData.get("email") as string;
+const RequestResetSchema = z.object({
+  email: z.string().email("Geçerli bir e-posta adresi girin!"),
+});
 
-  if (!email) {
-    return { error: "E-posta adresi gerekli!" };
+export async function requestPasswordReset(formData: FormData) {
+  const parsed = RequestResetSchema.safeParse(Object.fromEntries(formData));
+
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0].message };
   }
+
+  const { email } = parsed.data;
 
   const user = await prisma.user.findUnique({ where: { email } });
 
@@ -142,22 +157,25 @@ export async function requestPasswordReset(formData: FormData) {
   };
 }
 
+const ResetPasswordSchema = z
+  .object({
+    token: z.string().min(1, "Token gerekli!"),
+    newPassword: z.string().min(6, "Şifre en az 6 karakter olmalıdır!"),
+    confirmPassword: z.string(),
+  })
+  .refine((data) => data.newPassword === data.confirmPassword, {
+    message: "Şifreler eşleşmiyor!",
+    path: ["confirmPassword"],
+  });
+
 export async function resetPasswordWithToken(formData: FormData) {
-  const token = formData.get("token") as string;
-  const newPassword = formData.get("newPassword") as string;
-  const confirmPassword = formData.get("confirmPassword") as string;
+  const parsed = ResetPasswordSchema.safeParse(Object.fromEntries(formData));
 
-  if (!token || !newPassword || !confirmPassword) {
-    return { error: "Tüm alanları doldurun!" };
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0].message };
   }
 
-  if (newPassword.length < 6) {
-    return { error: "Şifre en az 6 karakter olmalıdır!" };
-  }
-
-  if (newPassword !== confirmPassword) {
-    return { error: "Şifreler eşleşmiyor!" };
-  }
+  const { token, newPassword } = parsed.data;
 
   let email: string;
   try {
