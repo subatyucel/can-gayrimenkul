@@ -87,7 +87,7 @@ model Listing {
 // Image Table
 model Image {
   id        String  @id @default(cuid())
-  url       String // Supabase Storage veya başka bir bulut linki
+  url       String
   listingId String
   listing   Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
 }
