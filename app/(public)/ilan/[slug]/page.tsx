@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import { cache } from "react";
 import {
   MapPin,
   BedDouble,
@@ -22,10 +23,13 @@ import ListingGallery from "@/components/public/ListingGallery";
 
 type Params = Promise<{ slug: string }>;
 
-let listing;
+const getListing = cache(async (slug: string) => {
+  return getPublicListingBySlug(slug);
+});
+
 export async function generateMetadata({ params }: { params: Params }) {
   const { slug } = await params;
-  listing = await getPublicListingBySlug(slug);
+  const listing = await getListing(slug);
 
   if (!listing) return { title: "İlan Bulunamadı" };
   return {
@@ -36,7 +40,7 @@ export async function generateMetadata({ params }: { params: Params }) {
 
 export default async function IlanDetayPage({ params }: { params: Params }) {
   const { slug } = await params;
-  const listing = await getPublicListingBySlug(slug);
+  const listing = await getListing(slug);
 
   if (!listing) notFound();
 
