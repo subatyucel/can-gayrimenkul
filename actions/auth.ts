@@ -1,17 +1,74 @@
-"use server";
+'use server';
 
-import { prisma } from "@/lib/prisma";
-import bcrypt from "bcrypt";
-import { cookies } from "next/headers";
-import { redirect } from "next/navigation";
-import { jwtVerify, SignJWT } from "jose";
-import nodemailer from "nodemailer";
-import { z } from "zod";
+import { prisma } from '@/lib/prisma';
+import bcrypt from 'bcrypt';
+import { cookies } from 'next/headers';
+import { redirect } from 'next/navigation';
+import { jwtVerify, SignJWT } from 'jose';
+import nodemailer from 'nodemailer';
+import { z } from 'zod';
+import {
+  RegisterFormValues,
+  registerSchema,
+} from '@/lib/validations/validations';
+import { ActionResponse } from '@/types';
+import { verifyToken } from '@/lib/auth';
+import { ActionResponseFactory, formatZodErrors } from '@/lib/action-response';
 
 const SECRET = new TextEncoder().encode(process.env.JWT_SECRET);
 
+export async function registerUser(
+  formValues: RegisterFormValues,
+): Promise<ActionResponse> {
+  try {
+    const { data, error, success } = registerSchema.safeParse(formValues);
+
+    if (!success) {
+      return ActionResponseFactory.error(
+        'Lütfen formdaki alanları uygun değerler ile doldurun!',
+        formatZodErrors(error),
+      );
+    }
+
+    const payload = await verifyToken(data.token);
+    if (!payload || payload.purpose !== 'invite') {
+      return ActionResponseFactory.error(
+        'Davet linkiniz geçerli değil! Lütfen yöneticiniz ile görüşün.',
+      );
+    }
+
+    const isUserExist = await prisma.user.findUnique({
+      where: { email: data.email },
+    });
+
+    if (isUserExist) {
+      return ActionResponseFactory.error(
+        'Bu mail adresi kullanımda. Şifremi unuttum ekranından şifrenizi sıfırlayabilirsiniz.',
+      );
+    }
+
+    const hashedPassword = await bcrypt.hash(data.password, 10);
+    const { confirmPassword, token, ...dbData } = data;
+
+    await prisma.$transaction([
+      prisma.user.create({
+        data: { ...dbData, password: hashedPassword, role: 'admin' },
+      }),
+    ]);
+
+    return ActionResponseFactory.success(
+      'Kayıt işlemi başarılı. Bilgilerinizle giriş yapabilirsiniz.',
+    );
+  } catch (error) {
+    console.error('Register action error', error);
+    return ActionResponseFactory.error(
+      'Sunucu tarafında beklenmeyen bir hata oluştu.',
+    );
+  }
+}
+
 const transporter = nodemailer.createTransport({
-  service: "gmail",
+  service: 'gmail',
   auth: {
     user: process.env.GMAIL_USER,
     pass: process.env.GMAIL_APP_PASSWORD,
@@ -19,8 +76,8 @@ const transporter = nodemailer.createTransport({
 });
 
 const LoginSchema = z.object({
-  email: z.string().email("Geçerli bir e-posta adresi girin!"),
-  password: z.string().min(1, "Şifre alanı zorunludur!"),
+  email: z.string().email('Geçerli bir e-posta adresi girin!'),
+  password: z.string().min(1, 'Şifre alanı zorunludur!'),
 });
 
 export async function login(formData: FormData) {
@@ -35,83 +92,39 @@ export async function login(formData: FormData) {
   const user = await prisma.user.findUnique({ where: { email } });
 
   if (!user || !(await bcrypt.compare(password, user.password))) {
-    return { error: "Giriş bilgileri hatalı!" };
+    return { error: 'Giriş bilgileri hatalı!' };
   }
 
   const token = await new SignJWT({ userId: user.id })
-    .setProtectedHeader({ alg: "HS256" })
-    .setExpirationTime("5d")
+    .setProtectedHeader({ alg: 'HS256' })
+    .setExpirationTime('5d')
     .sign(SECRET);
 
   const cookieStore = await cookies();
-  cookieStore.set("admin_session", token, {
-    secure: process.env.NODE_ENV === "production",
+  cookieStore.set('admin_session', token, {
+    secure: process.env.NODE_ENV === 'production',
     httpOnly: true,
-    sameSite: "lax",
-    path: "/",
+    sameSite: 'lax',
+    path: '/',
     maxAge: 60 * 60 * 24 * 5, //5 days
   });
 
-  redirect("/admin");
+  redirect('/admin');
 }
 
 export async function logout() {
   const cookieStore = await cookies();
 
-  cookieStore.set("admin_session", "", {
-    path: "/",
+  cookieStore.set('admin_session', '', {
+    path: '/',
     maxAge: 0,
   });
 
-  redirect("/admin/login");
-}
-
-const RegisterSchema = z
-  .object({
-    token: z.string().min(1, "Token (davet linki değeri) gerekli!"),
-    fullName: z.string().min(2, "Ad soyad en az 2 karakter olmalıdır!"),
-    email: z.string().email("Geçerli bir e-posta adresi girin!"),
-    password: z.string().min(6, "Şifre en az 6 karakter olmalıdır!"),
-    confirmPassword: z.string(),
-  })
-  .refine((data) => data.password === data.confirmPassword, {
-    message: "Şifreler eşleşmiyor!",
-    path: ["confirmPassword"],
-  });
-
-export async function registerWithInvite(formData: FormData) {
-  const parsed = RegisterSchema.safeParse(Object.fromEntries(formData));
-
-  if (!parsed.success) {
-    return { error: parsed.error.issues[0].message };
-  }
-
-  const { token, fullName, email, password } = parsed.data;
-
-  try {
-    await jwtVerify(token, SECRET);
-  } catch {
-    return { error: "Davet linki geçersiz veya süresi dolmuş!" };
-  }
-
-  const existing = await prisma.user.findUnique({ where: { email } });
-  if (existing) {
-    return { error: "Bu e-posta adresi zaten kullanılıyor!" };
-  }
-
-  const hashedPassword = await bcrypt.hash(password, 10);
-
-  await prisma.$transaction([
-    prisma.user.create({
-      data: { fullName, email, password: hashedPassword, role: "admin" },
-    }),
-  ]);
-
-  redirect("/admin/giris-yap?register=true");
+  redirect('/admin/login');
 }
 
 const RequestResetSchema = z.object({
-  email: z.string().email("Geçerli bir e-posta adresi girin!"),
+  email: z.string().email('Geçerli bir e-posta adresi girin!'),
 });
 
 export async function requestPasswordReset(formData: FormData) {
@@ -127,13 +140,13 @@ export async function requestPasswordReset(formData: FormData) {
 
   if (!user) {
     return {
-      success: "Eğer bu e-posta kayıtlıysa, şifre sıfırlama linki gönderildi.",
+      success: 'Eğer bu e-posta kayıtlıysa, şifre sıfırlama linki gönderildi.',
     };
   }
 
-  const token = await new SignJWT({ purpose: "password-reset", email })
-    .setProtectedHeader({ alg: "HS256" })
-    .setExpirationTime("30m")
+  const token = await new SignJWT({ purpose: 'password-reset', email })
+    .setProtectedHeader({ alg: 'HS256' })
+    .setExpirationTime('30m')
     .sign(SECRET);
 
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
@@ -142,7 +155,7 @@ export async function requestPasswordReset(formData: FormData) {
   await transporter.sendMail({
     from: `"Can Gayrimenkul" <${process.env.GMAIL_USER}>`,
     to: email,
-    subject: "Şifre Sıfırlama",
+    subject: 'Şifre Sıfırlama',
     html: `
     <h2>Şifre Sıfırlama</h2>
     <p>Merhaba ${user.fullName},</p>
@@ -153,19 +166,19 @@ export async function requestPasswordReset(formData: FormData) {
   });
 
   return {
-    success: "Eğer bu e-posta kayıtlıysa, şifre sıfırlama linki gönderildi.",
+    success: 'Eğer bu e-posta kayıtlıysa, şifre sıfırlama linki gönderildi.',
   };
 }
 
 const ResetPasswordSchema = z
   .object({
-    token: z.string().min(1, "Token gerekli!"),
-    newPassword: z.string().min(6, "Şifre en az 6 karakter olmalıdır!"),
+    token: z.string().min(1, 'Token gerekli!'),
+    newPassword: z.string().min(6, 'Şifre en az 6 karakter olmalıdır!'),
     confirmPassword: z.string(),
   })
   .refine((data) => data.newPassword === data.confirmPassword, {
-    message: "Şifreler eşleşmiyor!",
-    path: ["confirmPassword"],
+    message: 'Şifreler eşleşmiyor!',
+    path: ['confirmPassword'],
   });
 
 export async function resetPasswordWithToken(formData: FormData) {
@@ -180,17 +193,17 @@ export async function resetPasswordWithToken(formData: FormData) {
   let email: string;
   try {
     const { payload } = await jwtVerify(token, SECRET);
-    if (payload.purpose !== "password-reset") {
-      return { error: "Geçersiz link!" };
+    if (payload.purpose !== 'password-reset') {
+      return { error: 'Geçersiz link!' };
     }
     email = payload.email as string;
   } catch {
-    return { error: "Şifre sıfırlama linki geçersiz veya süresi dolmuş!" };
+    return { error: 'Şifre sıfırlama linki geçersiz veya süresi dolmuş!' };
   }
 
   const user = await prisma.user.findUnique({ where: { email } });
   if (!user) {
-    return { error: "Kullanıcı bulunamadı!" };
+    return { error: 'Kullanıcı bulunamadı!' };
   }
 
   const hashedPassword = await bcrypt.hash(newPassword, 10);
@@ -199,12 +212,12 @@ export async function resetPasswordWithToken(formData: FormData) {
     data: { password: hashedPassword },
   });
 
-  redirect("/admin/giris-yap?reset=success");
+  redirect('/admin/giris-yap?reset=success');
 }
 
 export async function getCurrentUserId(): Promise<string | null> {
   const cookieStore = await cookies();
-  const token = cookieStore.get("admin_session")?.value;
+  const token = cookieStore.get('admin_session')?.value;
   if (!token) return null;
 
   try {

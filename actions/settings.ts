@@ -1,37 +1,37 @@
-"use server";
+'use server';
 
-import { prisma } from "@/lib/prisma";
-import bcrypt from "bcrypt";
-import { SignJWT } from "jose";
-import { getCurrentUser, getCurrentUserId } from "./auth";
+import { prisma } from '@/lib/prisma';
+import bcrypt from 'bcrypt';
+import { SignJWT } from 'jose';
+import { getCurrentUser, getCurrentUserId } from './auth';
 
 const SECRET = new TextEncoder().encode(process.env.JWT_SECRET);
 
 export async function changePassword(formData: FormData) {
   const userId = await getCurrentUserId();
-  if (!userId) return { error: "Oturum bulunamadı!" };
+  if (!userId) return { error: 'Oturum bulunamadı!' };
 
-  const currentPassword = formData.get("currentPassword") as string;
-  const newPassword = formData.get("newPassword") as string;
-  const confirmPassword = formData.get("confirmPassword") as string;
+  const currentPassword = formData.get('currentPassword') as string;
+  const newPassword = formData.get('newPassword') as string;
+  const confirmPassword = formData.get('confirmPassword') as string;
 
   if (!currentPassword || !newPassword || !confirmPassword) {
-    return { error: "Tüm alanları doldurun!" };
+    return { error: 'Tüm alanları doldurun!' };
   }
 
   if (newPassword.length < 6) {
-    return { error: "Yeni şifre en az 6 karakter olmalıdır!" };
+    return { error: 'Yeni şifre en az 6 karakter olmalıdır!' };
   }
 
   if (newPassword !== confirmPassword) {
-    return { error: "Yeni şifreler eşleşmiyor!" };
+    return { error: 'Yeni şifreler eşleşmiyor!' };
   }
 
   const user = await prisma.user.findUnique({ where: { id: userId } });
-  if (!user) return { error: "Kullanıcı bulunamadı!" };
+  if (!user) return { error: 'Kullanıcı bulunamadı!' };
 
   const isValid = await bcrypt.compare(currentPassword, user.password);
-  if (!isValid) return { error: "Mevcut şifre hatalı!" };
+  if (!isValid) return { error: 'Mevcut şifre hatalı!' };
 
   const hashedPassword = await bcrypt.hash(newPassword, 10);
   await prisma.user.update({
@@ -39,59 +39,59 @@ export async function changePassword(formData: FormData) {
     data: { password: hashedPassword },
   });
 
-  return { success: "Şifre başarıyla değiştirildi!" };
+  return { success: 'Şifre başarıyla değiştirildi!' };
 }
 
 export async function changeEmail(formData: FormData) {
   const userId = await getCurrentUserId();
-  if (!userId) return { error: "Oturum bulunamadı!" };
+  if (!userId) return { error: 'Oturum bulunamadı!' };
 
-  const newEmail = formData.get("newEmail") as string;
-  const password = formData.get("password") as string;
+  const newEmail = formData.get('newEmail') as string;
+  const password = formData.get('password') as string;
 
   if (!newEmail || !password) {
-    return { error: "Tüm alanları doldurun!" };
+    return { error: 'Tüm alanları doldurun!' };
   }
 
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (!emailRegex.test(newEmail)) {
-    return { error: "Geçerli bir e-posta adresi girin!" };
+    return { error: 'Geçerli bir e-posta adresi girin!' };
   }
 
   const user = await prisma.user.findUnique({ where: { id: userId } });
-  if (!user) return { error: "Kullanıcı bulunamadı!" };
+  if (!user) return { error: 'Kullanıcı bulunamadı!' };
 
   const isValid = await bcrypt.compare(password, user.password);
-  if (!isValid) return { error: "Şifre hatalı!" };
+  if (!isValid) return { error: 'Şifre hatalı!' };
 
   const existing = await prisma.user.findUnique({ where: { email: newEmail } });
-  if (existing) return { error: "Bu e-posta adresi zaten kullanılıyor!" };
+  if (existing) return { error: 'Bu e-posta adresi zaten kullanılıyor!' };
 
   await prisma.user.update({
     where: { id: userId },
     data: { email: newEmail },
   });
 
-  return { success: "E-posta başarıyla değiştirildi!" };
+  return { success: 'E-posta başarıyla değiştirildi!' };
 }
 
 export async function createInvitation() {
   const user = await getCurrentUser();
-  if (!user) return { error: "Oturum bulunamadı!" };
+  if (!user) return { error: 'Oturum bulunamadı!' };
 
-  if (!user || user.role !== "owner") {
+  if (!user || user.role !== 'owner') {
     return {
-      error: "Bu işlemi yalnızca Owner yetkisine sahip kullanıcılar yapabilir!",
+      error: 'Bu işlemi yalnızca Owner yetkisine sahip kullanıcılar yapabilir!',
     };
   }
 
-  const token = await new SignJWT({ purpose: "invite" })
-    .setProtectedHeader({ alg: "HS256" })
-    .setExpirationTime("24h")
+  const token = await new SignJWT({ purpose: 'invite' })
+    .setProtectedHeader({ alg: 'HS256' })
+    .setExpirationTime('24h')
     .sign(SECRET);
 
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
-  const inviteLink = `${baseUrl}/admin/kayit-ol/${token}`;
+  const inviteLink = `${baseUrl}/admin/kayit-ol?t=${token}`;
 
   return { success: true, link: inviteLink };
 }
