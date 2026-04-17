@@ -26,7 +26,7 @@ export default function RegisterForm({ token }: { token: string }) {
     handleSubmit,
     control,
     formState: { isSubmitting },
-  } = useForm<RegisterFormValues>({
+  } = useForm({
     resolver: zodResolver(registerSchema),
     mode: 'onTouched',
     defaultValues: {

@@ -34,7 +34,6 @@ export const registerSchema = z
 
     confirmPassword: z
       .string()
-      .trim()
       .min(8, 'Şifre en az 8 karakterli olmalıdır')
       .regex(
         /^(?=.*[A-Za-z])(?=.*\d)/,
