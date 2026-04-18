@@ -1,5 +1,6 @@
 'use client';
 
+import { login } from '@/actions/auth';
 import { Button } from '@/components/ui/button';
 import {
   Field,
@@ -12,10 +13,13 @@ import { LoginFormValues, loginSchema } from '@/lib/validations/validations';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Loader2, LogIn } from 'lucide-react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Controller, useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 
 export default function LoginForm() {
+  const router = useRouter();
+
   const {
     handleSubmit,
     control,
@@ -31,9 +35,15 @@ export default function LoginForm() {
 
   async function onSubmit(data: LoginFormValues) {
     const toastId = toast.loading('Bilgileriniz kontrol ediliyor...');
-    await new Promise((resolve) => setTimeout(resolve, 2000));
+    const response = await login(data);
 
-    toast.success('başarılı', { id: toastId });
+    if (!response.success) {
+      toast.error(response.error, { id: toastId });
+      return;
+    }
+
+    toast.success('Hoşgeldiniz', { id: toastId });
+    router.push('/admin');
   }
 
   return (

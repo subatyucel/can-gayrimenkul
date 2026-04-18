@@ -8,18 +8,17 @@ import { jwtVerify, SignJWT } from 'jose';
 import nodemailer from 'nodemailer';
 import { z } from 'zod';
 import {
+  LoginFormValues,
+  loginSchema,
   RegisterFormValues,
   registerSchema,
 } from '@/lib/validations/validations';
-import { ActionResponse } from '@/types';
-import { verifyToken } from '@/lib/auth';
+import { createSession, verifyToken } from '@/lib/auth';
 import { ActionResponseFactory, formatZodErrors } from '@/lib/action-response';
 
 const SECRET = new TextEncoder().encode(process.env.JWT_SECRET);
 
-export async function registerUser(
-  formValues: RegisterFormValues,
-): Promise<ActionResponse> {
+export async function registerUser(formValues: RegisterFormValues) {
   try {
     const { data, error, success } = registerSchema.safeParse(formValues);
 
@@ -60,7 +59,33 @@ export async function registerUser(
       'Kayıt işlemi başarılı. Bilgilerinizle giriş yapabilirsiniz.',
     );
   } catch (error) {
-    console.error('Register action error', error);
+    console.error('💥💥Register action error', error);
+    return ActionResponseFactory.error(
+      'Sunucu tarafında beklenmeyen bir hata oluştu.',
+    );
+  }
+}
+
+export async function login(formValues: LoginFormValues) {
+  try {
+    const { data, error, success } = loginSchema.safeParse(formValues);
+    if (!success) {
+      return ActionResponseFactory.error(
+        'Lütfen formdaki alanları uygun değerler ile doldurun!',
+        formatZodErrors(error),
+      );
+    }
+
+    const user = await prisma.user.findUnique({ where: { email: data.email } });
+    if (!user || !(await bcrypt.compare(data.password, user.password))) {
+      return ActionResponseFactory.error('Giriş bilgileri hatalı!');
+    }
+
+    await createSession(user.id, user.role);
+
+    return ActionResponseFactory.success('Başarıyla giriş yapıldı!');
+  } catch (error) {
+    console.error('💥💥Login action error: ', error);
     return ActionResponseFactory.error(
       'Sunucu tarafında beklenmeyen bir hata oluştu.',
     );
@@ -74,43 +99,6 @@ const transporter = nodemailer.createTransport({
     pass: process.env.GMAIL_APP_PASSWORD,
   },
 });
-
-const LoginSchema = z.object({
-  email: z.string().email('Geçerli bir e-posta adresi girin!'),
-  password: z.string().min(1, 'Şifre alanı zorunludur!'),
-});
-
-export async function login(formData: FormData) {
-  const parsed = LoginSchema.safeParse(Object.fromEntries(formData));
-
-  if (!parsed.success) {
-    return { error: parsed.error.issues[0].message };
-  }
-
-  const { email, password } = parsed.data;
-
-  const user = await prisma.user.findUnique({ where: { email } });
-
-  if (!user || !(await bcrypt.compare(password, user.password))) {
-    return { error: 'Giriş bilgileri hatalı!' };
-  }
-
-  const token = await new SignJWT({ userId: user.id })
-    .setProtectedHeader({ alg: 'HS256' })
-    .setExpirationTime('5d')
-    .sign(SECRET);
-
-  const cookieStore = await cookies();
-  cookieStore.set('admin_session', token, {
-    secure: process.env.NODE_ENV === 'production',
-    httpOnly: true,
-    sameSite: 'lax',
-    path: '/',
-    maxAge: 60 * 60 * 24 * 5, //5 days
-  });
-
-  redirect('/admin');
-}
 
 export async function logout() {
   const cookieStore = await cookies();

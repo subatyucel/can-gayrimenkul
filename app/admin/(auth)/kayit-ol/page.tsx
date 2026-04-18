@@ -18,7 +18,7 @@ export default async function RegisterPage({
   const isTokenValid = token && (await verifyToken(token));
 
   return (
-    <div className="flex min-h-svh flex-col items-center justify-center bg-muted p-6 md:p-10">
+    <main className="flex min-h-svh flex-col items-center justify-center bg-muted p-6 md:p-10">
       {!isTokenValid ? (
         <InvalidTokenCard />
       ) : (
@@ -37,6 +37,6 @@ export default async function RegisterPage({
           </CardContent>
         </Card>
       )}
-    </div>
+    </main>
   );
 }
