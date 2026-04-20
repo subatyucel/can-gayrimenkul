@@ -7,7 +7,8 @@ export async function verifyToken(token: string) {
   try {
     const { payload } = await jwtVerify(token, SECRET);
     return payload;
-  } catch (_) {
+  } catch (error) {
+    console.error('💥💥 Token validation error: ', error);
     return null;
   }
 }
