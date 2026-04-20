@@ -44,7 +44,7 @@ export default function ResetPasswordForm({ token }: { token: string }) {
       toast.error(response.error, { id: toastId });
       return;
     }
-    router.push('/admin/giris-yap');
+    router.replace('/admin/giris-yap');
     toast.success(response.message, { id: toastId });
   }
 

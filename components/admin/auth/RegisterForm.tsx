@@ -48,7 +48,7 @@ export default function RegisterForm({ token }: { token: string }) {
     }
 
     toast.success('Kayıt başarılı, lütfen giriş yapın', { id: toastId });
-    router.push('/admin/giris-yap');
+    router.replace('/admin/giris-yap');
   }
 
   return (

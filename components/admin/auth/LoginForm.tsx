@@ -43,7 +43,7 @@ export default function LoginForm() {
     }
 
     toast.success('Hoşgeldiniz', { id: toastId });
-    router.push('/admin');
+    router.replace('/admin');
   }
 
   return (

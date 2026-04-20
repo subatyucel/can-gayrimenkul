@@ -43,7 +43,7 @@ export default function ForgotPasswordForm() {
       return;
     }
 
-    router.push('/admin/giris-yap');
+    router.replace('/admin/giris-yap');
     toast.success(response.message, { id: toastId });
   }
 
