@@ -15,10 +15,13 @@ import {
 } from '@/lib/validations/validations';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Loader2, Send } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import { Controller, useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 
 export default function ForgotPasswordForm() {
+  const router = useRouter();
+
   const {
     handleSubmit,
     control,
@@ -40,6 +43,7 @@ export default function ForgotPasswordForm() {
       return;
     }
 
+    router.push('/admin/giris-yap');
     toast.success(response.message, { id: toastId });
   }
 

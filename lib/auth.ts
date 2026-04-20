@@ -50,3 +50,11 @@ export async function createSession(userId: string, role: string) {
     throw new Error('Oturum oluşturulurken bir teknik hata oluştu.');
   }
 }
+
+export async function deleteSession() {
+  const cookieStore = await cookies();
+  cookieStore.set('admin_session', '', {
+    path: '/',
+    maxAge: 0,
+  });
+}

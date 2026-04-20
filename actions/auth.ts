@@ -3,7 +3,6 @@
 import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcrypt';
 import { cookies } from 'next/headers';
-import { redirect } from 'next/navigation';
 import { jwtVerify } from 'jose';
 import {
   ForgotPasswordFormValues,
@@ -15,7 +14,12 @@ import {
   ResetPasswordFormValues,
   resetPasswordSchema,
 } from '@/lib/validations/validations';
-import { createSession, generateToken, verifyToken } from '@/lib/auth';
+import {
+  createSession,
+  deleteSession,
+  generateToken,
+  verifyToken,
+} from '@/lib/auth';
 import { ActionResponseFactory, formatZodErrors } from '@/lib/action-response';
 import { sendResetPasswordMail } from '@/lib/mail';
 
@@ -167,14 +171,15 @@ export async function resetPassword(formValues: ResetPasswordFormValues) {
 }
 
 export async function logout() {
-  const cookieStore = await cookies();
-
-  cookieStore.set('admin_session', '', {
-    path: '/',
-    maxAge: 0,
-  });
-
-  redirect('/admin/login');
+  try {
+    await deleteSession();
+    return ActionResponseFactory.success('Çıkış işlemi başarılı.');
+  } catch (error) {
+    console.error('💥💥Logout action error: ', error);
+    return ActionResponseFactory.error(
+      'Çıkış yapılırken bir hata meydana geldi!',
+    );
+  }
 }
 
 export async function getCurrentUserId(): Promise<string | null> {
