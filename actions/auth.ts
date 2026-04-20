@@ -12,6 +12,8 @@ import {
   loginSchema,
   RegisterFormValues,
   registerSchema,
+  ResetPasswordFormValues,
+  resetPasswordSchema,
 } from '@/lib/validations/validations';
 import { createSession, generateToken, verifyToken } from '@/lib/auth';
 import { ActionResponseFactory, formatZodErrors } from '@/lib/action-response';
@@ -108,7 +110,7 @@ export async function requestPasswordReset(
     const user = await prisma.user.findUnique({ where: { email: data.email } });
     if (user) {
       const TOKEN = await generateToken(
-        { id: user.id, email: user.email },
+        { email: user.email },
         'password-reset',
         '30m',
       );
@@ -128,6 +130,42 @@ export async function requestPasswordReset(
   }
 }
 
+export async function resetPassword(formValues: ResetPasswordFormValues) {
+  try {
+    const { data, error, success } = resetPasswordSchema.safeParse(formValues);
+
+    if (!success) {
+      return ActionResponseFactory.error(
+        'Lütfen formdaki alanları uygun değerler ile doldurun!',
+        formatZodErrors(error),
+      );
+    }
+
+    const payload = await verifyToken(data.token);
+    if (!payload || payload.purpose !== 'password-reset' || !payload.id) {
+      return ActionResponseFactory.error(
+        'Şifre sıfırlama linkiniz geçerli değil! Şifremi unuttum sayfasından yeniden işlem yapınız.',
+      );
+    }
+
+    const hashedPassword = await bcrypt.hash(data.password, 10);
+
+    await prisma.user.update({
+      where: { email: payload.email as string },
+      data: { password: hashedPassword },
+    });
+
+    return ActionResponseFactory.success(
+      'Şifre başarı ile güncellenmiştir. Yeni şifreniz ile giriş yapabilirsiniz.',
+    );
+  } catch (error) {
+    console.error('👺👺Reset password action error: ', error);
+    return ActionResponseFactory.error(
+      'Şifre güncellenirken bir hata oluştu. Yeniden deneyiniz!',
+    );
+  }
+}
+
 export async function logout() {
   const cookieStore = await cookies();
 
@@ -137,40 +175,6 @@ export async function logout() {
   });
 
   redirect('/admin/login');
-}
-
-export async function resetPasswordWithToken(formData: FormData) {
-  const parsed = ResetPasswordSchema.safeParse(Object.fromEntries(formData));
-
-  if (!parsed.success) {
-    return { error: parsed.error.issues[0].message };
-  }
-
-  const { token, newPassword } = parsed.data;
-
-  let email: string;
-  try {
-    const { payload } = await jwtVerify(token, SECRET);
-    if (payload.purpose !== 'password-reset') {
-      return { error: 'Geçersiz link!' };
-    }
-    email = payload.email as string;
-  } catch {
-    return { error: 'Şifre sıfırlama linki geçersiz veya süresi dolmuş!' };
-  }
-
-  const user = await prisma.user.findUnique({ where: { email } });
-  if (!user) {
-    return { error: 'Kullanıcı bulunamadı!' };
-  }
-
-  const hashedPassword = await bcrypt.hash(newPassword, 10);
-  await prisma.user.update({
-    where: { email },
-    data: { password: hashedPassword },
-  });
-
-  redirect('/admin/giris-yap?reset=success');
 }
 
 export async function getCurrentUserId(): Promise<string | null> {

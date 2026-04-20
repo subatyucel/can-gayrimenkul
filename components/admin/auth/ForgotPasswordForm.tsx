@@ -40,10 +40,7 @@ export default function ForgotPasswordForm() {
       return;
     }
 
-    toast.success(
-      'Mail başarı ile gönderildi e-posta gelen kutunuzu ve spam kutunuzu kontrol edin.',
-      { id: toastId },
-    );
+    toast.success(response.message, { id: toastId });
   }
 
   return (

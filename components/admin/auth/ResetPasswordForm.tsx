@@ -1,5 +1,6 @@
 'use client';
 
+import { resetPassword } from '@/actions/auth';
 import { Button } from '@/components/ui/button';
 import {
   Field,
@@ -33,11 +34,14 @@ export default function ResetPasswordForm({ token }: { token: string }) {
   });
 
   async function onSubmit(data: ResetPasswordFormValues) {
-    console.log('form submitted', data);
     const toastId = toast.loading('Bilgileriniz kontrol ediliyor...');
-    await new Promise((resolve) => setTimeout(resolve, 2000));
+    const response = await resetPassword(data);
 
-    toast.success('Şifreniz başarıyla değiştirildi.', { id: toastId });
+    if (!response.success) {
+      toast.error(response.error, { id: toastId });
+      return;
+    }
+    toast.success(response.message, { id: toastId });
   }
 
   return (
