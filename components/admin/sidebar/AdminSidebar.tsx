@@ -27,7 +27,7 @@ export function AdminSidebar({ isMobile = false }: AdminSidebarProps) {
     }
 
     toast.success(response.message, { id: toastId });
-    router.push('/admin/giris-yap');
+    router.replace('/admin/giris-yap');
   }
 
   const containerClasses = isMobile
