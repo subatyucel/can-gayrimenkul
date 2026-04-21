@@ -1,6 +1,6 @@
-import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
-import Link from "next/link";
+import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
+import Link from 'next/link';
 
 type navLinkItemProps = {
   href: string;
@@ -18,12 +18,12 @@ export default function NavLinkItem({
   return (
     <Link href={href}>
       <Button
-        variant={isActive ? "secondary" : "ghost"}
+        variant={isActive ? 'secondary' : 'ghost'}
         className={cn(
-          "w-full justify-start gap-3 px-3 cursor-pointer",
+          'w-full justify-start gap-3 px-3 cursor-pointer',
           isActive
-            ? "bg-accent text-accent-foreground font-medium"
-            : "text-muted-foreground",
+            ? 'bg-accent text-accent-foreground font-medium'
+            : 'text-muted-foreground',
         )}
       >
         <Icon className="h-5 w-5" />

@@ -5,9 +5,9 @@ import { usePathname, useRouter } from 'next/navigation';
 import { LogOut, Building2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { logout } from '@/actions/auth';
-import { menuItems } from '@/lib/constans';
 import NavLinkItem from './NavLinkItem';
 import { toast } from 'sonner';
+import { SIDEBAR_LINKS } from '@/constants/admin-sidebar';
 
 interface AdminSidebarProps {
   isMobile?: boolean;
@@ -47,13 +47,13 @@ export function AdminSidebar({ isMobile = false }: AdminSidebarProps) {
       </div>
 
       <nav className="flex-1 space-y-1 px-4 py-4 min-h-0 overflow-y-auto">
-        {menuItems.map((item) => {
+        {SIDEBAR_LINKS.map((item) => {
           const isActive = pathname === item.href;
           return (
             <NavLinkItem
               key={item.href}
               href={item.href}
-              name={item.name}
+              name={item.label}
               isActive={isActive}
               Icon={item.icon}
             />
