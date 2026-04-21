@@ -1,5 +1,5 @@
-import { ActionResponse } from '@/types';
-import { success, type ZodError } from 'zod';
+import { type ActionResponse } from '@/types';
+import { type ZodError } from 'zod';
 
 export const ActionResponseFactory = {
   success: <T>(message: string, data?: T): ActionResponse<T> => ({
