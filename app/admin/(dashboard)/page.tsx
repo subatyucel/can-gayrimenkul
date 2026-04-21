@@ -1,52 +1,20 @@
-import { getDashboardStats } from '@/actions/stats';
-import StatCardContainer from '@/components/admin/dashboard/StatCardContainer';
-import { DistrictChart } from '@/components/admin/DistrictChart';
-import { RecentListingsTable } from '@/components/admin/RecentListingsTable';
-import { TypeChart } from '@/components/admin/TypeChart';
+import DashboardChartContainer from '@/components/admin/dashboard/charts/DashboardChartContainer';
+import DashboardStatCardContainer from '@/components/admin/dashboard/stats/DashboardStatCardContainer';
 
 export default async function AdminDashboard() {
-  const stats = await getDashboardStats();
-  const typeChartData = [
-    {
-      type: 'sale',
-      label: 'Satılık',
-      value: stats.forSaleActive,
-      fill: 'var(--chart-1)',
-    },
-    {
-      type: 'rent',
-      label: 'Kiralık',
-      value: stats.forRentActive,
-      fill: 'var(--chart-2)',
-    },
-  ];
-  const districtChartData = stats.districtStats.map((item, i) => ({
-    district: item.name,
-    count: item.count,
-    fill: `var(--chart-${(i % 5) + 1})`,
-  }));
-
   return (
     <>
       <h1 className="text-2xl font-bold tracking-tight text-center mb-4">
         Dashboard
       </h1>
-      <StatCardContainer />
+      <DashboardStatCardContainer />
+      <DashboardChartContainer />
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7 my-6">
-        <div className="col-span-4 md:col-span-3">
-          <TypeChart data={typeChartData} />
-        </div>
-
-        <div className="col-span-4">
-          <DistrictChart data={districtChartData} />
-        </div>
-      </div>
-      <div className="w-full overflow-hidden min-w-0">
+      {/* <div className="w-full overflow-hidden min-w-0">
         <div className="overflow-x-auto">
           <RecentListingsTable data={stats.recentListings} />
         </div>
-      </div>
+      </div> */}
     </>
   );
 }

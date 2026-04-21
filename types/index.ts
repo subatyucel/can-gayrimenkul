@@ -16,3 +16,9 @@ export type ActionResponse<T = void> =
       error: string;
       fieldErrors?: Record<string, string[]>;
     };
+
+export type DistrictDistributionChartData = {
+  district: string;
+  count: number;
+  fill: string;
+}[];

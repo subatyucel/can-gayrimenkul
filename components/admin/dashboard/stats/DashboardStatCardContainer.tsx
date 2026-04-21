@@ -1,4 +1,4 @@
-import { getDashboardStats } from '@/actions/dashboard';
+import { getListingStats } from '@/actions/dashboard';
 import StatCard from './StatCard';
 import {
   BadgeDollarSign,
@@ -7,8 +7,8 @@ import {
   CheckCheck,
 } from 'lucide-react';
 
-export default async function StatCardContainer() {
-  const response = await getDashboardStats();
+export default async function DashboardStatCardContainer() {
+  const response = await getListingStats();
 
   if (!response.success) {
     return (
