@@ -1,7 +1,7 @@
-import { redirect, notFound } from "next/navigation";
-import { getDistricts, getListingBySlug } from "@/actions/listing";
-import { ListingForm } from "@/components/admin/listing/ListingForm";
-import { getCurrentUser } from "@/actions/auth";
+import { redirect, notFound } from 'next/navigation';
+import { getDistricts, getListingBySlug } from '@/actions/listing';
+import { ListingForm } from '@/components/admin/listing/ListingForm';
+import { getCurrentUser } from '@/lib/auth';
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -9,7 +9,7 @@ interface Props {
 
 export default async function EditListingPage({ params }: Props) {
   const user = await getCurrentUser();
-  if (!user) redirect("/admin/giris-yap");
+  if (!user) redirect('/admin/giris-yap');
 
   const { slug } = await params;
 

@@ -2,8 +2,6 @@
 
 import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcrypt';
-import { cookies } from 'next/headers';
-import { jwtVerify } from 'jose';
 import {
   ForgotPasswordFormValues,
   forgotPasswordSchema,
@@ -22,8 +20,6 @@ import {
 } from '@/lib/auth';
 import { ActionResponseFactory, formatZodErrors } from '@/lib/action-response';
 import { sendResetPasswordMail } from '@/lib/mail';
-
-const SECRET = new TextEncoder().encode(process.env.JWT_SECRET);
 
 export async function registerUser(formValues: RegisterFormValues) {
   try {
@@ -180,27 +176,4 @@ export async function logout() {
       'Çıkış yapılırken bir hata meydana geldi!',
     );
   }
-}
-
-export async function getCurrentUserId(): Promise<string | null> {
-  const cookieStore = await cookies();
-  const token = cookieStore.get('admin_session')?.value;
-  if (!token) return null;
-
-  try {
-    const { payload } = await jwtVerify(token, SECRET);
-    return payload.userId as string;
-  } catch {
-    return null;
-  }
-}
-
-export async function getCurrentUser() {
-  const userId = await getCurrentUserId();
-  if (!userId) return null;
-
-  return prisma.user.findUnique({
-    where: { id: userId },
-    select: { id: true, email: true, fullName: true, role: true },
-  });
 }

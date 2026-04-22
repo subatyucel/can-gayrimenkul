@@ -1,16 +1,21 @@
-import { getCurrentUser } from "@/actions/auth";
-import { getListings } from "@/actions/listing";
-import { ListingsTable } from "@/components/admin/ListingsTable";
-import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
-import Link from "next/link";
-import { redirect } from "next/navigation";
+import { getDashboardListings } from '@/actions/listing';
+import ListingCardContainer from '@/components/admin/listing/ListingCardContainer';
+import { Button } from '@/components/ui/button';
+import { ListingCardData } from '@/types';
+import { Plus } from 'lucide-react';
+import Link from 'next/link';
+import { toast } from 'sonner';
 
 export default async function ListingsPage() {
-  const user = await getCurrentUser();
-  if (!user) redirect("/admin/giris-yap");
+  const response = await getDashboardListings();
+  let data: ListingCardData[];
 
-  const listings = await getListings();
+  if (!response.success) {
+    data = [];
+    toast.error(response.error);
+  } else {
+    data = response.data || [];
+  }
 
   return (
     <>
@@ -23,8 +28,8 @@ export default async function ListingsPage() {
           </Button>
         </Link>
       </div>
-
-      <ListingsTable data={listings} isOwner={user.role === "owner"} />
+      <ListingCardContainer data={data} />
+      {/* <ListingsTable data={listings} isOwner={user.role === 'owner'} /> */}
     </>
   );
 }

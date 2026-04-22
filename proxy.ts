@@ -10,8 +10,6 @@ export default async function proxy(request: NextRequest) {
     '/admin/sifremi-unuttum',
   );
 
-  console.log(request.nextUrl.pathname);
-
   if (isLoginPage || isRegisterPage || isPasswordResetPage) {
     if (session?.value) {
       try {

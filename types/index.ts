@@ -1,3 +1,5 @@
+import { Prisma } from '@prisma/client';
+
 type DefaultSearchParams = Record<string, string | string[] | undefined>;
 
 export type NextPageProps<T = DefaultSearchParams> = {
@@ -22,3 +24,21 @@ export type DistrictDistributionChartData = {
   count: number;
   fill: string;
 }[];
+
+export const dashboardListing = {
+  select: {
+    title: true,
+    listingType: true,
+    listingNumber: true,
+    price: true,
+    isActive: true,
+    slug: true,
+    createdAt: true,
+    district: { select: { name: true } },
+    neighborhood: { select: { name: true } },
+    user: { select: { fullName: true } },
+    images: { select: { url: true } },
+  },
+} satisfies Prisma.ListingFindManyArgs;
+
+export type ListingCardData = Prisma.ListingGetPayload<typeof dashboardListing>;

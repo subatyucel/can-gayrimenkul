@@ -1,5 +1,7 @@
 import { jwtVerify, SignJWT } from 'jose';
 import { cookies } from 'next/headers';
+import { cache } from 'react';
+import { prisma } from './prisma';
 
 const SECRET = new TextEncoder().encode(process.env.JWT_SECRET);
 
@@ -59,3 +61,29 @@ export async function deleteSession() {
     maxAge: 0,
   });
 }
+
+export const getCurrentUser = cache(async () => {
+  const cookieStore = await cookies();
+  const token = cookieStore.get('admin_session')?.value;
+
+  if (!token) {
+    return null;
+  }
+
+  const payload = await verifyToken(token);
+  if (!payload || payload.purpose !== 'session' || !payload.userId) {
+    return null;
+  }
+
+  const user = await prisma.user.findUnique({
+    where: { id: payload.userId as string },
+    omit: { password: true },
+  });
+
+  if (!user) {
+    await deleteSession();
+    return null;
+  }
+
+  return user;
+});
