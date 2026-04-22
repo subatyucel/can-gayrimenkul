@@ -9,11 +9,7 @@ import NavLinkItem from './NavLinkItem';
 import { toast } from 'sonner';
 import { SIDEBAR_LINKS } from '@/constants/admin-sidebar';
 
-interface AdminSidebarProps {
-  isMobile?: boolean;
-}
-
-export function AdminSidebar({ isMobile = false }: AdminSidebarProps) {
+export function AdminSidebar({ isMobile = false }: { isMobile?: boolean }) {
   const router = useRouter();
   const pathname = usePathname();
 

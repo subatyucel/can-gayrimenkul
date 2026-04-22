@@ -9,12 +9,6 @@ export default async function AdminDashboard() {
       </h1>
       <DashboardStatCardContainer />
       <DashboardChartContainer />
-
-      {/* <div className="w-full overflow-hidden min-w-0">
-        <div className="overflow-x-auto">
-          <RecentListingsTable data={stats.recentListings} />
-        </div>
-      </div> */}
     </>
   );
 }
