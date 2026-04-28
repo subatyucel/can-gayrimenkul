@@ -12,7 +12,7 @@ import { Input } from '@/components/ui/input';
 import {
   ForgotPasswordFormValues,
   forgotPasswordSchema,
-} from '@/lib/validations/validations';
+} from '@/lib/validations/auth';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Loader2, Send } from 'lucide-react';
 import { useRouter } from 'next/navigation';
@@ -68,12 +68,7 @@ export default function ForgotPasswordForm() {
           )}
         />
 
-        <Button
-          disabled={isSubmitting}
-          className="cursor-pointer"
-          type="submit"
-          form="sendResetLink"
-        >
+        <Button disabled={isSubmitting} type="submit" form="sendResetLink">
           {isSubmitting ? (
             <Loader2 className="animate-spin" />
           ) : (

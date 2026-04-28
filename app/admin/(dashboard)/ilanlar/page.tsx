@@ -22,14 +22,13 @@ export default async function ListingsPage() {
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold tracking-tight">İlanlar</h1>
         <Link href="/admin/ilanlar/ilan-olustur">
-          <Button>
-            <Plus className="h-4 w-4 mr-2" />
+          <Button variant="success">
+            <Plus className="w-4 mr-2" />
             Yeni İlan
           </Button>
         </Link>
       </div>
       <ListingCardContainer data={data} />
-      {/* <ListingsTable data={listings} isOwner={user.role === 'owner'} /> */}
     </>
   );
 }

@@ -1,16 +1,16 @@
-"use client";
+'use client';
 
-import { useState } from "react";
+import { useState } from 'react';
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
+} from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Button } from '@/components/ui/button';
 import {
   Lock,
   Mail,
@@ -20,16 +20,16 @@ import {
   MessageCircle,
   Link as LinkIcon,
   Loader2,
-} from "lucide-react";
+} from 'lucide-react';
 import {
   changePassword,
   changeEmail,
   createInvitation,
-} from "@/actions/settings";
+} from '@/actions/settings';
 
 interface SettingsPageProps {
   currentEmail: string;
-  role: "owner" | "admin";
+  role: 'owner' | 'admin';
 }
 
 export function SettingsPage({ currentEmail, role }: SettingsPageProps) {
@@ -41,7 +41,7 @@ export function SettingsPage({ currentEmail, role }: SettingsPageProps) {
     error?: string;
     success?: string;
   }>({});
-  const [inviteLink, setInviteLink] = useState("");
+  const [inviteLink, setInviteLink] = useState('');
   const [copied, setCopied] = useState(false);
   const [inviteLoading, setInviteLoading] = useState(false);
   const [passwordLoading, setPasswordLoading] = useState(false);
@@ -81,7 +81,7 @@ export function SettingsPage({ currentEmail, role }: SettingsPageProps) {
     const text = encodeURIComponent(
       `Can Gayrimenkul yönetim paneline davet edildiniz! Kayıt olmak için: ${inviteLink}`,
     );
-    window.open(`https://wa.me/?text=${text}`, "_blank");
+    window.open(`https://wa.me/?text=${text}`, '_blank');
   }
 
   return (
@@ -135,11 +135,7 @@ export function SettingsPage({ currentEmail, role }: SettingsPageProps) {
               <p className="text-sm text-green-600">{passwordMsg.success}</p>
             )}
 
-            <Button
-              type="submit"
-              disabled={passwordLoading}
-              className="cursor-pointer"
-            >
+            <Button type="submit" disabled={passwordLoading}>
               {passwordLoading && <Loader2 className="h-4 w-4 animate-spin" />}
               Şifreyi Güncelle
             </Button>
@@ -154,7 +150,7 @@ export function SettingsPage({ currentEmail, role }: SettingsPageProps) {
             E-posta Değiştir
           </CardTitle>
           <CardDescription>
-            Mevcut e-posta:{" "}
+            Mevcut e-posta:{' '}
             <span className="font-medium text-foreground">{currentEmail}</span>
           </CardDescription>
         </CardHeader>
@@ -181,11 +177,7 @@ export function SettingsPage({ currentEmail, role }: SettingsPageProps) {
               <p className="text-sm text-green-600">{emailMsg.success}</p>
             )}
 
-            <Button
-              type="submit"
-              disabled={emailLoading}
-              className="cursor-pointer"
-            >
+            <Button type="submit" disabled={emailLoading}>
               {emailLoading && <Loader2 className="h-4 w-4 animate-spin" />}
               E-postayı Güncelle
             </Button>
@@ -193,7 +185,7 @@ export function SettingsPage({ currentEmail, role }: SettingsPageProps) {
         </CardContent>
       </Card>
 
-      {role === "owner" && (
+      {role === 'owner' && (
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -210,7 +202,6 @@ export function SettingsPage({ currentEmail, role }: SettingsPageProps) {
               onClick={handleCreateInvite}
               disabled={inviteLoading}
               variant="outline"
-              className="cursor-pointer"
             >
               {inviteLoading ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -226,18 +217,13 @@ export function SettingsPage({ currentEmail, role }: SettingsPageProps) {
                   <code className="flex-1 text-sm break-all">{inviteLink}</code>
                 </div>
                 <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleCopy}
-                    className="cursor-pointer"
-                  >
+                  <Button variant="outline" size="sm" onClick={handleCopy}>
                     {copied ? (
                       <Check className="h-4 w-4 text-green-600" />
                     ) : (
                       <Copy className="h-4 w-4" />
                     )}
-                    {copied ? "Kopyalandı!" : "Kopyala"}
+                    {copied ? 'Kopyalandı!' : 'Kopyala'}
                   </Button>
                   <Button
                     variant="outline"

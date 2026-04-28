@@ -9,10 +9,7 @@ import {
   FieldLabel,
 } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
-import {
-  type RegisterFormValues,
-  registerSchema,
-} from '@/lib/validations/validations';
+import { RegisterFormValues, registerSchema } from '@/lib/validations/auth';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
@@ -140,12 +137,7 @@ export default function RegisterForm({ token }: { token: string }) {
           render={({ field }) => <input type="hidden" {...field} />}
         />
       </FieldGroup>
-      <Button
-        disabled={isSubmitting}
-        type="submit"
-        form="registerForm"
-        className="cursor-pointer"
-      >
+      <Button disabled={isSubmitting} type="submit" form="registerForm">
         {isSubmitting ? <Loader2 className="animate-spin" /> : 'Kayıt Ol'}
       </Button>
     </form>

@@ -12,20 +12,42 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { ListingCardData } from '@/types';
-import { Pencil, Power, Trash2 } from 'lucide-react';
+import { Pencil, Power } from 'lucide-react';
 import Image from 'next/image';
-import { toggleListingState } from '@/actions/listing';
+import { deleteListing, toggleListingState } from '@/actions/listing';
 import { toast } from 'sonner';
+
+import DeleteListingButtonWithAlert from './DeleteListingButtonWithAlert';
+import Link from 'next/link';
 
 export function ListingCard({ listing }: { listing: ListingCardData }) {
   const [isPending, startTransition] = useTransition();
+
   function handleToggle() {
     startTransition(async () => {
+      const toastId = toast.loading('İlan durumu değiştiriliyor...');
       const response = await toggleListingState(listing.slug);
 
       if (!response.success) {
-        toast(response.error);
+        toast.error(response.error, { id: toastId });
+        return;
       }
+
+      toast.success(response.message, { id: toastId });
+    });
+  }
+
+  function handleDelete() {
+    startTransition(async () => {
+      const toastId = toast.loading('İlan siliniyor...');
+      const response = await deleteListing(listing.slug);
+
+      if (!response.success) {
+        toast.error(response.error, { id: toastId });
+        return;
+      }
+
+      toast.success(response.message, { id: toastId });
     });
   }
 
@@ -34,7 +56,10 @@ export function ListingCard({ listing }: { listing: ListingCardData }) {
       <Image
         width={100}
         height={100}
-        src={listing.images[0].url}
+        src={
+          listing.images[0]?.url ||
+          'https://placehold.co/400.png?text=İlan+Fotoğrafı+Bulunamadı'
+        }
         alt="Event cover"
         className="relative z-20 aspect-video w-full object-cover  "
       />
@@ -42,13 +67,13 @@ export function ListingCard({ listing }: { listing: ListingCardData }) {
         <CardTitle className="truncate font-bold">
           #{listing.listingNumber} - {listing.title}
         </CardTitle>
-        <CardDescription>
+        <CardDescription className="flex">
           <Badge>{listing.listingType == 'sale' ? 'Satılık' : 'Kiralık'}</Badge>
           <Badge
             className={
               listing.isActive
-                ? 'bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-300'
-                : 'bg-red-50 text-red-700 dark:bg-red-950 dark:text-red-300'
+                ? 'bg-green-700 text-green-300'
+                : 'bg-red-700 text-red-300'
             }
           >
             {listing.isActive ? 'Aktif' : 'Pasif'}
@@ -77,18 +102,28 @@ export function ListingCard({ listing }: { listing: ListingCardData }) {
           variant={listing.isActive ? 'destructive' : 'default'}
           size="icon"
           title={listing.isActive ? 'Pasife Al' : 'Aktif Et'}
-          className="cursor-pointer"
           onClick={handleToggle}
+          disabled={isPending}
         >
           <Power />
         </Button>
-        <Button variant="outline" size="icon" title="Düzenle">
-          <Pencil />
-        </Button>
-
-        <Button variant="destructive" size="icon" title="Sil">
-          <Trash2 />
-        </Button>
+        <Link href={`/admin/ilanlar/${listing.slug}/duzenle`}>
+          <Button
+            variant="outline"
+            size="icon"
+            title="Düzenle"
+            className="cursor-pointer"
+            disabled={isPending}
+          >
+            <Pencil />
+          </Button>
+        </Link>
+        <DeleteListingButtonWithAlert
+          title={listing.title}
+          slug={listing.slug}
+          isPending={isPending}
+          handleDelete={handleDelete}
+        />
       </CardFooter>
     </Card>
   );

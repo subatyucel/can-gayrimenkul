@@ -1,7 +1,6 @@
 import { redirect, notFound } from 'next/navigation';
-import { getDistricts, getListingBySlug } from '@/actions/listing';
-import { ListingForm } from '@/components/admin/listing/ListingForm';
 import { getCurrentUser } from '@/lib/auth';
+import CreateUpdateListingForm from '@/components/admin/listing/listing-form/CreateUpdateListingForm';
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -13,17 +12,14 @@ export default async function EditListingPage({ params }: Props) {
 
   const { slug } = await params;
 
-  const [listing, districts] = await Promise.all([
-    getListingBySlug(slug),
-    getDistricts(),
-  ]);
+  const listing = await getListingBySlug(slug);
 
   if (!listing) notFound();
 
   return (
     <>
       <h1 className="text-2xl font-bold tracking-tight mb-6">İlanı Düzenle</h1>
-      <ListingForm districts={districts} initialData={listing} />
+      <CreateUpdateListingForm />
     </>
   );
 }

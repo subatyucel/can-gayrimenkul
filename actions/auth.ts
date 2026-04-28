@@ -3,6 +3,14 @@
 import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcrypt';
 import {
+  createSession,
+  deleteSession,
+  generateToken,
+  verifyToken,
+} from '@/lib/auth';
+import { ActionResponseFactory, formatZodErrors } from '@/lib/action-response';
+import { sendResetPasswordMail } from '@/lib/mail';
+import {
   ForgotPasswordFormValues,
   forgotPasswordSchema,
   LoginFormValues,
@@ -11,15 +19,7 @@ import {
   registerSchema,
   ResetPasswordFormValues,
   resetPasswordSchema,
-} from '@/lib/validations/validations';
-import {
-  createSession,
-  deleteSession,
-  generateToken,
-  verifyToken,
-} from '@/lib/auth';
-import { ActionResponseFactory, formatZodErrors } from '@/lib/action-response';
-import { sendResetPasswordMail } from '@/lib/mail';
+} from '@/lib/validations/auth';
 
 export async function registerUser(formValues: RegisterFormValues) {
   try {

@@ -3,10 +3,14 @@
 import { prisma } from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
 import slugify from 'slugify';
-import { cloudinary } from '@/lib/cloudinary';
 import { getCurrentUser } from '@/lib/auth';
 import { ActionResponseFactory } from '@/lib/action-response';
 import { dashboardListing } from '@/types';
+import {
+  CreateListingPayload,
+  imageUrlsSchema,
+  serverListingSchema,
+} from '@/lib/validations/listing';
 
 export async function getDashboardListings() {
   try {
@@ -31,6 +35,17 @@ export async function getDashboardListings() {
     console.error('getListings action error:', error);
     return ActionResponseFactory.error('İlanlar getirilirken bir hata oluştu.');
   }
+}
+
+async function generateUniqueSlug(title: string) {
+  let slug = slugify(title, { lower: true, strict: true });
+  const existing = await prisma.listing.findUnique({ where: { slug } });
+
+  if (existing) {
+    slug = `${slug}-${Math.random().toString(36).substring(2, 7)}`;
+  }
+
+  return slug;
 }
 
 export async function toggleListingState(slug: string) {
@@ -66,6 +81,88 @@ export async function toggleListingState(slug: string) {
   } catch (error) {
     console.error('💥💥 toggleListingStatus action error: ', error);
     return ActionResponseFactory.error('Durum güncellenirken bir hata oluştu');
+  }
+}
+
+export async function deleteListing(slug: string) {
+  const user = await getCurrentUser();
+  if (!user) {
+    return ActionResponseFactory.error(
+      'Kullanıcı bulunamadı. Lütfen yeniden giriş yapınız.',
+    );
+  }
+
+  try {
+    const listing = await prisma.listing.findUnique({
+      where: { slug },
+      select: { userId: true },
+    });
+    if (!listing) {
+      return ActionResponseFactory.error(
+        'İlan bulunamadı. Lütfen sayfayı yenileyip tekrar deneyiniz.',
+      );
+    }
+
+    if (user.role === 'admin' && listing.userId !== user.id) {
+      return ActionResponseFactory.error(
+        'Bu işlemi gerçekleştirmek için yetkiniz bulunmamaktadır!',
+      );
+    }
+
+    //TODO DELETE IMAGES FROM CLOUDINARY FIRST
+
+    await prisma.listing.delete({ where: { slug } });
+    revalidatePath('/admin/ilanlar');
+    return ActionResponseFactory.success('İlan başarıyla silindi.');
+  } catch (error) {
+    console.error('💥💥 deleteListing action error: ', error);
+    return ActionResponseFactory.error(
+      'İlan silinirken sunucuda bir hata meydana geldi.',
+    );
+  }
+}
+
+export async function createListing(
+  data: CreateListingPayload,
+  imageUrls: string[],
+) {
+  try {
+    const user = await getCurrentUser();
+    if (!user) {
+      return ActionResponseFactory.error(
+        'Bu işlem için yetkiniz bulunmamaktadır. Lütfen yöneticinizle görüşün!',
+      );
+    }
+
+    const validatedFields = serverListingSchema.safeParse(data);
+    const validatedImages = imageUrlsSchema.safeParse(imageUrls);
+
+    if (!validatedFields.success || !validatedImages.success) {
+      return ActionResponseFactory.error(
+        'Gönderilen veriler hatalı. Formu uygun formatta doldurun.',
+      );
+    }
+
+    const validData = validatedFields.data;
+    const safeImageUrls = validatedImages.data;
+
+    const slug = await generateUniqueSlug(validData.title);
+    const newListing = await prisma.listing.create({
+      data: {
+        ...validData,
+        slug,
+        images: { create: safeImageUrls.map((url) => ({ url })) },
+        userId: user.id,
+      },
+    });
+
+    return ActionResponseFactory.success(
+      'İlan başarıyla oluşturuldu.',
+      newListing,
+    );
+  } catch (error) {
+    console.error('💥💥 createListing action error: ', error);
+    return ActionResponseFactory.error('İlan oluşturulurken bir hata oluştu');
   }
 }
 
@@ -164,82 +261,37 @@ export async function getPublicListingBySlug(slug: string) {
   });
 }
 
-export async function deleteListing(listingId: string) {
-  const user = await getCurrentUser();
-  if (!user)
-    return { error: 'Kullanıcı bulunamadı! Lütfen yeniden giriş yapınız.' };
+// export async function deleteListing(listingId: string) {
+//   const user = await getCurrentUser();
+//   if (!user)
+//     return { error: 'Kullanıcı bulunamadı! Lütfen yeniden giriş yapınız.' };
 
-  const listing = await prisma.listing.findUnique({
-    where: { id: listingId },
-    select: { userId: true },
-  });
+//   const listing = await prisma.listing.findUnique({
+//     where: { id: listingId },
+//     select: { userId: true },
+//   });
 
-  if (!listing) return { error: 'İlan bulunamadı!' };
+//   if (!listing) return { error: 'İlan bulunamadı!' };
 
-  if (user.role === 'admin' && listing.userId !== user.id) {
-    return { error: 'Bu ilanı silme yetkiniz bulunmamaktadır!' };
-  }
+//   if (user.role === 'admin' && listing.userId !== user.id) {
+//     return { error: 'Bu ilanı silme yetkiniz bulunmamaktadır!' };
+//   }
 
-  await cloudinary.api
-    .delete_resources_by_prefix(`listings/${listingId}`)
-    .catch(() => {});
-  await cloudinary.api.delete_folder(`listings/${listingId}`).catch(() => {});
+//   await cloudinary.api
+//     .delete_resources_by_prefix(`listings/${listingId}`)
+//     .catch(() => {});
+//   await cloudinary.api.delete_folder(`listings/${listingId}`).catch(() => {});
 
-  await prisma.listing.delete({ where: { id: listingId } });
+//   await prisma.listing.delete({ where: { id: listingId } });
 
-  revalidatePath('/admin/ilanlar');
-  return { success: true };
-}
+//   revalidatePath('/admin/ilanlar');
+//   return { success: true };
+// }
 
 export async function getDistricts() {
   return prisma.district.findMany({
     select: { id: true, name: true },
     orderBy: { name: 'asc' },
-  });
-}
-
-export async function getNeighborhoods(districtId: number) {
-  return prisma.neighborhood.findMany({
-    where: { districtId },
-    select: { id: true, name: true },
-    orderBy: { name: 'asc' },
-  });
-}
-
-export async function getListingBySlug(slug: string) {
-  const user = await getCurrentUser();
-  if (!user) return null;
-
-  const where = user.role === 'owner' ? { slug } : { slug, userId: user.id };
-
-  return prisma.listing.findFirst({
-    where,
-    select: {
-      id: true,
-      title: true,
-      description: true,
-      price: true,
-      listingType: true,
-      expireDate: true,
-      districtId: true,
-      neighborhoodId: true,
-      roomCount: true,
-      netSquareMeters: true,
-      grossSquareMeters: true,
-      buildingAge: true,
-      floorAt: true,
-      totalFloor: true,
-      bathroomCount: true,
-      kitchenType: true,
-      heating: true,
-      parking: true,
-      balcony: true,
-      elevator: true,
-      furnished: true,
-      creditworthy: true,
-      dues: true,
-      images: { select: { id: true, url: true } },
-    },
   });
 }
 
@@ -293,90 +345,67 @@ export async function getListingBySlug(slug: string) {
 //   return null;
 // }
 
-async function uploadImageToCloudinary(
-  file: File,
-  folder: string,
-): Promise<string> {
-  const buffer = Buffer.from(await file.arrayBuffer());
-  const result = await new Promise<{ secure_url: string }>(
-    (resolve, reject) => {
-      cloudinary.uploader
-        .upload_stream({ folder, resource_type: 'image' }, (error, result) => {
-          if (error || !result) reject(error);
-          else resolve(result);
-        })
-        .end(buffer);
-    },
-  );
-  return result.secure_url;
-}
+// export async function createListing(formData: FormData) {
+//   const user = await getCurrentUser();
+//   if (!user) return { error: 'Oturum bulunamadı! Lütfen yeniden giriş yapın.' };
 
-function extractCloudinaryPublicId(url: string): string {
-  const match = url.match(/\/upload\/(?:v\d+\/)?(.+)\.[^.]+$/);
-  return match ? match[1] : '';
-}
+//   const fields = parseListingFormData(formData);
+//   const validationError = validateListingFields(fields);
+//   if (validationError) return { error: validationError };
 
-export async function createListing(formData: FormData) {
-  const user = await getCurrentUser();
-  if (!user) return { error: 'Oturum bulunamadı! Lütfen yeniden giriş yapın.' };
+//   const images = formData.getAll('images') as File[];
+//   const validImages = images.filter((f) => f.size > 0);
 
-  const fields = parseListingFormData(formData);
-  const validationError = validateListingFields(fields);
-  if (validationError) return { error: validationError };
+//   if (validImages.length === 0)
+//     return { error: 'En az bir fotoğraf yüklemelisiniz!' };
+//   if (validImages.length > 10)
+//     return { error: 'En fazla 10 fotoğraf yükleyebilirsiniz!' };
 
-  const images = formData.getAll('images') as File[];
-  const validImages = images.filter((f) => f.size > 0);
+//   for (const img of validImages) {
+//     if (img.size > 5 * 1024 * 1024)
+//       return { error: 'Her fotoğraf en fazla 5 MB olabilir!' };
+//     if (!img.type.startsWith('image/'))
+//       return { error: 'Sadece görsel dosyaları yükleyebilirsiniz!' };
+//   }
 
-  if (validImages.length === 0)
-    return { error: 'En az bir fotoğraf yüklemelisiniz!' };
-  if (validImages.length > 10)
-    return { error: 'En fazla 10 fotoğraf yükleyebilirsiniz!' };
+//   const baseSlug = slugify(fields.title, {
+//     lower: true,
+//     strict: true,
+//     locale: 'tr',
+//   });
 
-  for (const img of validImages) {
-    if (img.size > 5 * 1024 * 1024)
-      return { error: 'Her fotoğraf en fazla 5 MB olabilir!' };
-    if (!img.type.startsWith('image/'))
-      return { error: 'Sadece görsel dosyaları yükleyebilirsiniz!' };
-  }
+//   try {
+//     const listing = await prisma.listing.create({
+//       data: {
+//         ...fields,
+//         listingType: fields.listingType as 'sale' | 'rent',
+//         slug: baseSlug,
+//         userId: user.id,
+//       },
+//       select: { id: true, listingNumber: true },
+//     });
 
-  const baseSlug = slugify(fields.title, {
-    lower: true,
-    strict: true,
-    locale: 'tr',
-  });
+//     await prisma.listing.update({
+//       where: { id: listing.id },
+//       data: { slug: `${baseSlug}-${listing.listingNumber}` },
+//     });
 
-  try {
-    const listing = await prisma.listing.create({
-      data: {
-        ...fields,
-        listingType: fields.listingType as 'sale' | 'rent',
-        slug: baseSlug,
-        userId: user.id,
-      },
-      select: { id: true, listingNumber: true },
-    });
+//     const imageUrls = await Promise.all(
+//       validImages.map((file) =>
+//         uploadImageToCloudinary(file, `listings/${listing.id}`),
+//       ),
+//     );
 
-    await prisma.listing.update({
-      where: { id: listing.id },
-      data: { slug: `${baseSlug}-${listing.listingNumber}` },
-    });
+//     await prisma.image.createMany({
+//       data: imageUrls.map((url) => ({ url, listingId: listing.id })),
+//     });
+//   } catch {
+//     return { error: 'İlan oluşturulurken bir hata oluştu!' };
+//   }
 
-    const imageUrls = await Promise.all(
-      validImages.map((file) =>
-        uploadImageToCloudinary(file, `listings/${listing.id}`),
-      ),
-    );
-
-    await prisma.image.createMany({
-      data: imageUrls.map((url) => ({ url, listingId: listing.id })),
-    });
-  } catch {
-    return { error: 'İlan oluşturulurken bir hata oluştu!' };
-  }
-
-  revalidatePath('/admin/ilanlar');
-  return { success: true };
-}
+//   revalidatePath('/admin/ilanlar');
+//   return { success: true };
+// }
 
 // export async function updateListing(listingId: string, formData: FormData) {
 //   const user = await getCurrentUser();

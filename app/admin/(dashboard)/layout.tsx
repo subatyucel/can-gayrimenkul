@@ -25,11 +25,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
           <header className="sticky  top-0 z-30 flex h-14 items-center gap-4 border-b bg-background px-4 md:px-6">
             <Sheet>
               <SheetTrigger asChild>
-                <Button
-                  size="icon"
-                  variant="outline"
-                  className="md:hidden cursor-pointer"
-                >
+                <Button size="icon" variant="outline" className="md:hidden">
                   <Menu className="h-5 w-5" />
                 </Button>
               </SheetTrigger>

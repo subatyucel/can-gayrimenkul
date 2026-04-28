@@ -1,4 +1,6 @@
+import { ListingFormInput, ListingFormOutput } from '@/lib/validations/listing';
 import { Prisma } from '@prisma/client';
+import { UseFormReturn } from 'react-hook-form';
 
 type DefaultSearchParams = Record<string, string | string[] | undefined>;
 
@@ -42,3 +44,7 @@ export const dashboardListing = {
 } satisfies Prisma.ListingFindManyArgs;
 
 export type ListingCardData = Prisma.ListingGetPayload<typeof dashboardListing>;
+
+export interface ListingFormTabProps {
+  form: UseFormReturn<ListingFormInput, unknown, ListingFormOutput>;
+}

@@ -61,7 +61,7 @@ export function AdminSidebar({ isMobile = false }: { isMobile?: boolean }) {
         <Button
           onClick={handleLogout}
           variant="ghost"
-          className="w-full justify-start gap-3 text-destructive hover:text-destructive hover:bg-destructive/10 cursor-pointer"
+          className="w-full justify-start gap-3 text-destructive hover:text-destructive hover:bg-destructive/10 "
         >
           <LogOut className="h-5 w-5" />
           Çıkış Yap

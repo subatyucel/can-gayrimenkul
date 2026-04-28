@@ -12,7 +12,7 @@ import { Input } from '@/components/ui/input';
 import {
   ResetPasswordFormValues,
   resetPasswordSchema,
-} from '@/lib/validations/validations';
+} from '@/lib/validations/auth';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Loader2, RotateCcw } from 'lucide-react';
 import { useRouter } from 'next/navigation';
@@ -100,12 +100,7 @@ export default function ResetPasswordForm({ token }: { token: string }) {
           render={({ field }) => <input type="hidden" {...field} />}
         />
       </FieldGroup>
-      <Button
-        disabled={isSubmitting}
-        type="submit"
-        form="resetPassword"
-        className="cursor-pointer"
-      >
+      <Button disabled={isSubmitting} type="submit" form="resetPassword">
         {isSubmitting ? (
           <Loader2 className="animate-spin" />
         ) : (

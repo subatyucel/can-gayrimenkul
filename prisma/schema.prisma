@@ -69,7 +69,6 @@ model Listing {
   heating           String
   isActive          Boolean     @default(true)
   slug              String      @unique
-  expireDate        DateTime
 
   // Foreign Keys
   districtId     Int

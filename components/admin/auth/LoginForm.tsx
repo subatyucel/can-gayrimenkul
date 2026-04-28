@@ -9,7 +9,7 @@ import {
   FieldLabel,
 } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
-import { LoginFormValues, loginSchema } from '@/lib/validations/validations';
+import { LoginFormValues, loginSchema } from '@/lib/validations/auth';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Loader2, LogIn } from 'lucide-react';
 import Link from 'next/link';
@@ -94,12 +94,7 @@ export default function LoginForm() {
           )}
         />
 
-        <Button
-          disabled={isSubmitting}
-          className="cursor-pointer"
-          type="submit"
-          form="loginForm"
-        >
+        <Button disabled={isSubmitting} type="submit" form="loginForm">
           {isSubmitting ? (
             <Loader2 className="animate-spin" />
           ) : (
