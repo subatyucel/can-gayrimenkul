@@ -6,16 +6,14 @@ import { getCurrentUser } from '@/lib/auth';
 import { ActionResponseFactory } from '@/lib/action-response';
 import { dashboardListing } from '@/types';
 import {
-  CreateListingPayload,
+  ListingPayload,
   imageUrlsSchema,
   serverListingSchema,
 } from '@/lib/validations/listing';
 import { generateUniqueSlug } from '@/lib/helpers';
+import { deleteImagesFromCloudinary } from '@/lib/cloudinary/cloudinary-server';
 
-export async function createListing(
-  data: CreateListingPayload,
-  imageUrls: string[],
-) {
+export async function createListing(data: ListingPayload, imageUrls: string[]) {
   try {
     const user = await getCurrentUser();
     if (!user) {
@@ -81,7 +79,7 @@ export async function getDashboardListings() {
   }
 }
 
-export async function toggleListingState(slug: string) {
+export async function toggleListingState(id: string) {
   const user = await getCurrentUser();
   if (!user) {
     return ActionResponseFactory.error(
@@ -90,7 +88,7 @@ export async function toggleListingState(slug: string) {
   }
   try {
     const listing = await prisma.listing.findUnique({
-      where: { slug },
+      where: { id },
       select: { isActive: true, userId: true },
     });
 
@@ -105,7 +103,7 @@ export async function toggleListingState(slug: string) {
     }
 
     await prisma.listing.update({
-      where: { slug },
+      where: { id },
       data: { isActive: !listing.isActive },
     });
 
@@ -152,6 +150,124 @@ export async function deleteListing(slug: string) {
     return ActionResponseFactory.error(
       'İlan silinirken sunucuda bir hata meydana geldi.',
     );
+  }
+}
+
+export async function getListingBySlug(slug: string) {
+  try {
+    const listing = await prisma.listing.findUnique({
+      where: { slug },
+      include: { images: true },
+    });
+
+    if (!listing) {
+      return ActionResponseFactory.error('İlan bulunamadı.');
+    }
+
+    return ActionResponseFactory.success(
+      'İlanlar başarıyla getirildi',
+      listing,
+    );
+  } catch (error) {
+    console.error('💥💥 getListingBySlug action error: ', error);
+    return ActionResponseFactory.error('İlan getirilirken bir hata oluştu.');
+  }
+}
+
+export async function updateListing(
+  id: string,
+  data: ListingPayload,
+  imageUrls: string[],
+) {
+  try {
+    const user = await getCurrentUser();
+    const validatedFields = serverListingSchema.safeParse(data);
+    const validatedImages = imageUrlsSchema.safeParse(imageUrls);
+
+    if (!validatedFields.success || !validatedImages.success) {
+      return ActionResponseFactory.error(
+        'Gönderilen veriler hatalı. Formu uygun formatta doldurun.',
+      );
+    }
+
+    const currentListing = await prisma.listing.findUnique({
+      where: { id },
+      include: { images: true },
+    });
+
+    if (!currentListing || currentListing.userId !== user?.id) {
+      return ActionResponseFactory.error(
+        'Bu ilanı güncellemek için yetkiniz yok.',
+      );
+    }
+
+    let slug = currentListing.slug;
+    if (currentListing.title !== validatedFields.data.title) {
+      slug = await generateUniqueSlug(validatedFields.data.title);
+    }
+
+    await prisma.$transaction(async (tx) => {
+      await tx.listing.update({
+        where: { id },
+        data: {
+          ...validatedFields.data,
+          slug,
+        },
+      });
+
+      await tx.image.deleteMany({
+        where: {
+          listingId: id,
+          url: { notIn: imageUrls },
+        },
+      });
+
+      const remainingImages = await tx.image.findMany({
+        where: { listingId: id },
+        select: { url: true },
+      });
+      const remainingUrls = remainingImages.map((img) => img.url);
+      const newUrlsToCreate = imageUrls.filter(
+        (url) => !remainingUrls.includes(url),
+      );
+
+      if (newUrlsToCreate.length > 0) {
+        await tx.image.createMany({
+          data: newUrlsToCreate.map((url) => ({
+            url,
+            listingId: id,
+          })),
+        });
+      }
+    });
+
+    const deletedUrls = currentListing.images
+      .map((img) => img.url)
+      .filter((url) => !imageUrls.includes(url));
+
+    if (deletedUrls.length > 0) {
+      await deleteImagesFromCloudinary(deletedUrls);
+    }
+
+    revalidatePath('/admin/ilanlar');
+    revalidatePath(`/admin/ilanlar/${slug}`);
+    return ActionResponseFactory.success('İlan başarıyla güncellendi.');
+  } catch (error) {
+    console.log('💥💥 updateListing action error: ', error);
+    return ActionResponseFactory.error(
+      'İlan güncellenirken bir hata meydana geldi.',
+    );
+  }
+}
+
+export async function cleanupOrphanImages(urls: string[]) {
+  try {
+    if (urls.length > 0) {
+      await deleteImagesFromCloudinary(urls);
+      console.log('🧹 Orphan images cleaned.');
+    }
+  } catch (error) {
+    console.error('💥💥 Error while cleaning orphan images:', error);
   }
 }
 

@@ -1,3 +1,4 @@
+import { ListingWithImages } from '@/components/admin/listing/listing-form/CreateUpdateListingForm';
 import { ListingFormInput, ListingFormOutput } from '@/lib/validations/listing';
 
 export const TAB_FIELDS: Record<string, (keyof ListingFormInput)[]> = {
@@ -44,7 +45,7 @@ export const DEFAULT_LISTING_VALUES: Partial<ListingFormInput> = {
 };
 
 export function prepareFormValues(
-  initialData?: Partial<ListingFormOutput> | null,
+  initialData?: Partial<ListingWithImages> | null,
 ) {
   if (!initialData) {
     return DEFAULT_LISTING_VALUES;
@@ -62,5 +63,6 @@ export function prepareFormValues(
     totalFloor: initialData.totalFloor?.toString() ?? '',
     bathroomCount: initialData.bathroomCount?.toString() ?? '0',
     dues: initialData.dues?.toString() ?? '0',
+    images: [],
   };
 }

@@ -1,25 +1,22 @@
-import { redirect, notFound } from 'next/navigation';
-import { getCurrentUser } from '@/lib/auth';
+import { notFound } from 'next/navigation';
 import CreateUpdateListingForm from '@/components/admin/listing/listing-form/CreateUpdateListingForm';
+import { NextPageProps } from '@/types';
+import { getListingBySlug } from '@/actions/listing';
 
-interface Props {
-  params: Promise<{ slug: string }>;
-}
-
-export default async function EditListingPage({ params }: Props) {
-  const user = await getCurrentUser();
-  if (!user) redirect('/admin/giris-yap');
-
+export default async function EditListingPage({ params }: NextPageProps) {
   const { slug } = await params;
+  const response = await getListingBySlug(slug);
 
-  const listing = await getListingBySlug(slug);
-
-  if (!listing) notFound();
+  if (!response.success || !response.data) {
+    notFound();
+  }
 
   return (
     <>
-      <h1 className="text-2xl font-bold tracking-tight mb-6">İlanı Düzenle</h1>
-      <CreateUpdateListingForm />
+      <h1 className="text-2xl font-bold tracking-tight mb-6">
+        İlanı Düzenle ({response.data.title})
+      </h1>
+      <CreateUpdateListingForm initialData={response.data} />
     </>
   );
 }

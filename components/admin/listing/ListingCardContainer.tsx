@@ -11,7 +11,7 @@ export default function ListingCardContainer({
       {data.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
           {data.map((data) => (
-            <ListingCard key={data.slug} listing={data} />
+            <ListingCard key={data.id} listing={data} />
           ))}
         </div>
       ) : (

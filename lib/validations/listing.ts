@@ -101,7 +101,7 @@ export const listingSchema = z.object({
           'Sadece JPG, PNG veya WEBP formatları desteklenir.',
         ),
     )
-    .min(1, 'İlanın en az 1 fotoğrafı olmalıdır.'),
+    .default([]),
 });
 
 const CLOUDINARY_DOMAIN = `https://res.cloudinary.com/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload/`;
@@ -115,7 +115,7 @@ export const imageUrlsSchema = z.array(
 );
 
 export const serverListingSchema = listingSchema.omit({ images: true });
-export type CreateListingPayload = z.infer<typeof serverListingSchema>;
+export type ListingPayload = z.infer<typeof serverListingSchema>;
 
 export type ListingFormInput = z.input<typeof listingSchema>;
 export type ListingFormOutput = z.infer<typeof listingSchema>;

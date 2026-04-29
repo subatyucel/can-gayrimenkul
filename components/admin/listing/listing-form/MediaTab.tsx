@@ -11,6 +11,12 @@ import {
 } from '@/components/ui/field';
 import { toast } from 'sonner';
 import { ImagePreview } from './ImagePreview';
+import type { Image as PrismaImage } from '@prisma/client';
+
+interface MediaTabProps extends ListingFormTabProps {
+  existingImages: PrismaImage[];
+  onRemoveExisting: (id: string) => void;
+}
 
 const compressOptions = {
   maxSizeMB: 5,
@@ -19,7 +25,11 @@ const compressOptions = {
   fileType: 'image/webp',
 };
 
-export default function MediaTab({ form }: ListingFormTabProps) {
+export default function MediaTab({
+  form,
+  existingImages,
+  onRemoveExisting,
+}: MediaTabProps) {
   const { control } = form;
 
   return (
@@ -65,7 +75,7 @@ export default function MediaTab({ form }: ListingFormTabProps) {
             };
 
             const removeImage = (index: number) => {
-              const updatedImages = [...field.value];
+              const updatedImages = [...(field.value || [])];
               updatedImages.splice(index, 1);
               field.onChange(updatedImages);
             };
@@ -97,9 +107,18 @@ export default function MediaTab({ form }: ListingFormTabProps) {
 
                 {/* Önizleme Alanı */}
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 mt-6">
+                  {existingImages.map((img) => (
+                    <ImagePreview
+                      key={img.id}
+                      type="existing"
+                      url={img.url}
+                      onRemove={() => onRemoveExisting(img.id)}
+                    />
+                  ))}
                   {field.value?.map((file: File, index: number) => (
                     <ImagePreview
                       key={`${file.name}-${index}`}
+                      type="new"
                       file={file}
                       onRemove={() => removeImage(index)}
                     />

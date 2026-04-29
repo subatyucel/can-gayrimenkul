@@ -29,6 +29,7 @@ export type DistrictDistributionChartData = {
 
 export const dashboardListing = {
   select: {
+    id: true,
     title: true,
     listingType: true,
     listingNumber: true,

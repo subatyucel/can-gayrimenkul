@@ -26,7 +26,7 @@ export function ListingCard({ listing }: { listing: ListingCardData }) {
   function handleToggle() {
     startTransition(async () => {
       const toastId = toast.loading('İlan durumu değiştiriliyor...');
-      const response = await toggleListingState(listing.slug);
+      const response = await toggleListingState(listing.id);
 
       if (!response.success) {
         toast.error(response.error, { id: toastId });

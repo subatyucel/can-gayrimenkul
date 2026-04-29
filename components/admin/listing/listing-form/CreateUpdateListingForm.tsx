@@ -24,10 +24,18 @@ import {
 } from '@/constants/listing-form';
 import { useRouter } from 'next/navigation';
 import { uploadImagesToCloudinary } from '@/lib/cloudinary/cloudinary-client';
-import { createListing } from '@/actions/listing';
+import {
+  cleanupOrphanImages,
+  createListing,
+  updateListing,
+} from '@/actions/listing';
+import type { Listing, Image as PrismaImage } from '@prisma/client';
 
+export type ListingWithImages = Listing & {
+  images: PrismaImage[];
+};
 interface ListingFormProps {
-  initialData?: ListingFormOutput;
+  initialData?: ListingWithImages | null;
 }
 
 type TabType = (typeof TABS_ORDER)[number];
@@ -38,6 +46,15 @@ export default function CreateUpdateListingForm({
   const router = useRouter();
   const isEditMode = !!initialData;
   const [activeTab, setActiveTab] = useState<TabType>('general');
+  const [existingImages, setExistingImages] = useState<PrismaImage[]>(
+    initialData?.images || [],
+  );
+
+  function handleRemoveExistingImage(imageIdToRemove: string) {
+    setExistingImages((prev) =>
+      prev.filter((img) => img.id !== imageIdToRemove),
+    );
+  }
 
   const form = useForm<ListingFormInput, unknown, ListingFormOutput>({
     resolver: zodResolver(listingSchema),
@@ -55,36 +72,52 @@ export default function CreateUpdateListingForm({
       `${isEditMode ? 'Değişiklikler kaydediliyor...' : 'İlan oluşturuluyor...'}`,
     );
 
+    let newImageUrls: string[] = [];
+
     try {
       const { images, ...formData } = data;
-      let imageUrls: string[] = [];
 
       if (images && images.length > 0) {
-        toast.info('Fotoğraflar yükleniyor...');
-        imageUrls = await uploadImagesToCloudinary(images);
+        toast.info('Fotoğraflar yükleniyor...', { id: toastId });
+        newImageUrls = await uploadImagesToCloudinary(images);
       }
 
+      const existingUrls = existingImages.map((img) => img.url);
+      const finalImageUrls = [...existingUrls, ...newImageUrls];
+
       if (isEditMode) {
-        console.log('edit mode verileri: ', formData, imageUrls);
-        await new Promise((resolve) => setTimeout(resolve, 3000));
-        toast.success('Değişiklikler kaydedildi');
-      } else {
-        const response = await createListing(formData, imageUrls);
+        //Edit mode
+        const response = await updateListing(
+          initialData.id,
+          formData,
+          finalImageUrls,
+        );
+
         if (!response.success) {
+          if (newImageUrls.length > 0) await cleanupOrphanImages(newImageUrls);
           toast.error(response.error, { id: toastId });
           return;
         }
 
         toast.success(response.message, { id: toastId });
-        router.push('/admin/ilanlar');
+      } else {
+        //Edit mode = false create mode
+        const response = await createListing(formData, finalImageUrls);
+        if (!response.success) {
+          if (newImageUrls.length > 0) await cleanupOrphanImages(newImageUrls);
+          toast.error(response.error, { id: toastId });
+          return;
+        }
+
+        toast.success(response.message, { id: toastId });
       }
-    } catch (error) {
-      console.error('Submit Hatası:', error);
+
+      router.push('/admin/ilanlar');
+    } catch (_) {
+      if (newImageUrls.length > 0) await cleanupOrphanImages(newImageUrls);
       toast.error('İşlem sırasında beklenmeyen bir hata oluştu.', {
         id: toastId,
       });
-    } finally {
-      toast.dismiss(toastId);
     }
   }
 
@@ -92,14 +125,14 @@ export default function CreateUpdateListingForm({
   const isFirstTab = currentIndex === 0;
   const isLastTab = currentIndex === TABS_ORDER.length - 1;
 
-  function handleNext(e: React.MouseEvent) {
+  function handleNextTab(e: React.MouseEvent) {
     e.preventDefault();
     if (!isLastTab) {
       setActiveTab(TABS_ORDER[currentIndex + 1]);
     }
   }
 
-  async function handlePrev(e: React.MouseEvent) {
+  async function handlePrevTab(e: React.MouseEvent) {
     e.preventDefault();
     if (!isFirstTab) {
       setActiveTab(TABS_ORDER[currentIndex - 1]);
@@ -153,14 +186,18 @@ export default function CreateUpdateListingForm({
         <GeneralTab form={form} />
         <LocationTab form={form} />
         <FeaturesTab form={form} />
-        <MediaTab form={form} />
+        <MediaTab
+          form={form}
+          existingImages={existingImages}
+          onRemoveExisting={handleRemoveExistingImage}
+        />
       </Tabs>
 
       <div className="mt-10 max-w-full flex-wrap flex justify-between items-center border-t pt-6">
         <Button
           type="button"
           variant="outline"
-          onClick={handlePrev}
+          onClick={handlePrevTab}
           disabled={isFirstTab || isSubmitting}
         >
           <ChevronLeft className="mr-2 h-4 w-4" />
@@ -184,7 +221,7 @@ export default function CreateUpdateListingForm({
         <Button
           type="button"
           variant="outline"
-          onClick={handleNext}
+          onClick={handleNextTab}
           disabled={isLastTab || isSubmitting}
         >
           <ChevronRight className="h-4 w-4" />
