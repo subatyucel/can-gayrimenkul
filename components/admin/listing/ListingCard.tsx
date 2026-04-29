@@ -64,7 +64,7 @@ export function ListingCard({ listing }: { listing: ListingCardData }) {
         className="relative z-20 aspect-video w-full object-cover  "
       />
       <CardHeader>
-        <CardTitle className="truncate font-bold">
+        <CardTitle className="truncate font-bold leading-normal pb-1">
           #{listing.listingNumber} - {listing.title}
         </CardTitle>
         <CardDescription>
