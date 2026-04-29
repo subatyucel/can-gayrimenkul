@@ -16,7 +16,7 @@ export default function ListingCardContainer({
         </div>
       ) : (
         <div className="rounded-lg border p-10 text-center text-muted-foreground">
-          Henüz ilan eklenmemiş.
+          Sizin tarafınızdan eklenmiş ilan bulunmuyor.
         </div>
       )}
     </>
