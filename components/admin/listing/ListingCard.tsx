@@ -58,9 +58,9 @@ export function ListingCard({ listing }: { listing: ListingCardData }) {
         height={100}
         src={
           listing.images[0]?.url ||
-          'https://placehold.co/400.png?text=İlan+Fotoğrafı+Bulunamadı'
+          'https://placehold.co/400x200/webp?text=%C4%B0lan+Foto%C4%9Fraf%C4%B1%5Cn+Bulunamad%C4%B1'
         }
-        alt="Event cover"
+        alt="İlan kapak fotoğrafı"
         className="relative z-20 aspect-video w-full object-cover  "
       />
       <CardHeader>
