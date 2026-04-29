@@ -67,15 +67,11 @@ export function ListingCard({ listing }: { listing: ListingCardData }) {
         <CardTitle className="truncate font-bold">
           #{listing.listingNumber} - {listing.title}
         </CardTitle>
-        <CardDescription className="flex">
-          <Badge>{listing.listingType == 'sale' ? 'Satılık' : 'Kiralık'}</Badge>
-          <Badge
-            className={
-              listing.isActive
-                ? 'bg-green-700 text-green-300'
-                : 'bg-red-700 text-red-300'
-            }
-          >
+        <CardDescription>
+          <Badge variant="secondary">
+            {listing.listingType == 'sale' ? 'Satılık' : 'Kiralık'}
+          </Badge>
+          <Badge variant={listing.isActive ? 'active' : 'passive'}>
             {listing.isActive ? 'Aktif' : 'Pasif'}
           </Badge>
         </CardDescription>
@@ -99,7 +95,7 @@ export function ListingCard({ listing }: { listing: ListingCardData }) {
 
       <CardFooter className="flex gap-2 justify-center">
         <Button
-          variant={listing.isActive ? 'destructive' : 'default'}
+          variant={listing.isActive ? 'destructive' : 'success'}
           size="icon"
           title={listing.isActive ? 'Pasife Al' : 'Aktif Et'}
           onClick={handleToggle}
