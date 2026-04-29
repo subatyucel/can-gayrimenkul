@@ -40,7 +40,7 @@ export function ListingCard({ listing }: { listing: ListingCardData }) {
   function handleDelete() {
     startTransition(async () => {
       const toastId = toast.loading('İlan siliniyor...');
-      const response = await deleteListing(listing.slug);
+      const response = await deleteListing(listing.id);
 
       if (!response.success) {
         toast.error(response.error, { id: toastId });

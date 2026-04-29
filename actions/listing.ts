@@ -115,7 +115,7 @@ export async function toggleListingState(id: string) {
   }
 }
 
-export async function deleteListing(slug: string) {
+export async function deleteListing(id: string) {
   const user = await getCurrentUser();
   if (!user) {
     return ActionResponseFactory.error(
@@ -125,24 +125,24 @@ export async function deleteListing(slug: string) {
 
   try {
     const listing = await prisma.listing.findUnique({
-      where: { slug },
-      select: { userId: true },
+      where: { id },
+      include: { images: true },
     });
-    if (!listing) {
-      return ActionResponseFactory.error(
-        'İlan bulunamadı. Lütfen sayfayı yenileyip tekrar deneyiniz.',
-      );
-    }
 
-    if (user.role === 'admin' && listing.userId !== user.id) {
+    if (!listing || (user.role !== 'owner' && user.id !== listing.userId)) {
       return ActionResponseFactory.error(
         'Bu işlemi gerçekleştirmek için yetkiniz bulunmamaktadır!',
       );
     }
 
-    //TODO DELETE IMAGES FROM CLOUDINARY FIRST
+    const imageUrls = listing.images.map((img) => img.url);
 
-    await prisma.listing.delete({ where: { slug } });
+    await prisma.listing.delete({ where: { id } });
+
+    if (imageUrls.length > 0) {
+      await deleteImagesFromCloudinary(imageUrls);
+    }
+
     revalidatePath('/admin/ilanlar');
     return ActionResponseFactory.success('İlan başarıyla silindi.');
   } catch (error) {
