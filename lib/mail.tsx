@@ -20,12 +20,21 @@ export async function sendResetPasswordMail(
     <ResetPasswordMail fullName={fullName} resetLink={resetLink} />,
   );
 
-  console.log(html);
-
   return transporter.sendMail({
     from: `"Can Gayrimenkul" <${process.env.GMAIL_USER}>`,
     to: email,
     subject: 'Şifre Sıfırlama',
+    html,
+  });
+}
+
+export async function sendOtpMail(email: string, type: string, otp: string) {
+  const html = `<h1>Şifre sıfırlama kodunuz: ${otp}</h1>`;
+
+  return transporter.sendMail({
+    from: `"Can Gayrimenkul <${process.env.GMAIL_USER}>`,
+    to: email,
+    subject: 'OTP',
     html,
   });
 }

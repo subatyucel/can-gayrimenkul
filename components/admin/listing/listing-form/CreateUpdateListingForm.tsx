@@ -15,7 +15,16 @@ import LocationTab from './LocationTab';
 import FeaturesTab from './FeaturesTab';
 import MediaTab from './MediaTab';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, ChevronRight, Loader2, Save } from 'lucide-react';
+import {
+  ChevronLeft,
+  ChevronRight,
+  HouseHeart,
+  ImagePlus,
+  Info,
+  Loader2,
+  MapPin,
+  Save,
+} from 'lucide-react';
 import { useState } from 'react';
 import {
   prepareFormValues,
@@ -157,13 +166,14 @@ export default function CreateUpdateListingForm({
       >
         <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 mb-8 h-auto">
           <TabsTrigger value="general">
-            Genel Bilgiler
+            <Info className="h-5 w-5" /> Genel Bilgiler
             {hasErrorInTab('general') && (
               <ErrorDot className="-top-1 -right-1" />
             )}
           </TabsTrigger>
 
           <TabsTrigger value="location">
+            <MapPin className="h-5 w-5" />
             Konum Bilgileri
             {hasErrorInTab('location') && (
               <ErrorDot className="-top-1 -right-1" />
@@ -171,6 +181,7 @@ export default function CreateUpdateListingForm({
           </TabsTrigger>
 
           <TabsTrigger value="features">
+            <HouseHeart className="w-5 h-5" />
             Özellikler
             {hasErrorInTab('features') && (
               <ErrorDot className="-top-1 -right-1" />
@@ -178,6 +189,7 @@ export default function CreateUpdateListingForm({
           </TabsTrigger>
 
           <TabsTrigger value="media">
+            <ImagePlus className="w-5 h-5" />
             Medya
             {hasErrorInTab('media') && <ErrorDot className="-top-1 -right-1" />}
           </TabsTrigger>

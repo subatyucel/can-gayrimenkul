@@ -90,3 +90,15 @@ model Image {
   listingId String
   listing   Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
 }
+
+// Otp Table
+
+model OtpToken {
+  id        String   @id @default(cuid())
+  email     String
+  code      String
+  type      String
+  expiresAt DateTime
+
+  @@unique([email, type])
+}
