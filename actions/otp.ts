@@ -15,7 +15,7 @@ export async function generateAndSendOtp(email: string, type: OtpType) {
       data: { email, code, type, expiresAt },
     });
 
-    await sendOtpMail(email, 'fkds', code);
+    await sendOtpMail(email, code);
     return ActionResponseFactory.success('Kod mail adresine gönderildi.');
   } catch (error) {
     console.error('💥💥 generateAndSendOtp action error: ', error);
