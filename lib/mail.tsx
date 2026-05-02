@@ -1,6 +1,7 @@
 import nodemailer from 'nodemailer';
 import { render } from 'react-email';
 import ResetPasswordMail from '@/components/emails/ResetPassword';
+import OtpMail from '@/components/emails/Otp';
 
 const transporter = nodemailer.createTransport({
   service: 'gmail',
@@ -20,12 +21,21 @@ export async function sendResetPasswordMail(
     <ResetPasswordMail fullName={fullName} resetLink={resetLink} />,
   );
 
-  console.log(html);
-
   return transporter.sendMail({
     from: `"Can Gayrimenkul" <${process.env.GMAIL_USER}>`,
     to: email,
     subject: 'Şifre Sıfırlama',
+    html,
+  });
+}
+
+export async function sendOtpMail(email: string, code: string) {
+  const html = await render(<OtpMail code={code} />);
+
+  return transporter.sendMail({
+    from: `"Can Gayrimenkul <${process.env.GMAIL_USER}>`,
+    to: email,
+    subject: 'Doğrulama Kodu',
     html,
   });
 }

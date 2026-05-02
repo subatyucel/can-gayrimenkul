@@ -9,11 +9,7 @@ import NavLinkItem from './NavLinkItem';
 import { toast } from 'sonner';
 import { SIDEBAR_LINKS } from '@/constants/admin-sidebar';
 
-interface AdminSidebarProps {
-  isMobile?: boolean;
-}
-
-export function AdminSidebar({ isMobile = false }: AdminSidebarProps) {
+export function AdminSidebar({ isMobile = false }: { isMobile?: boolean }) {
   const router = useRouter();
   const pathname = usePathname();
 
@@ -65,7 +61,7 @@ export function AdminSidebar({ isMobile = false }: AdminSidebarProps) {
         <Button
           onClick={handleLogout}
           variant="ghost"
-          className="w-full justify-start gap-3 text-destructive hover:text-destructive hover:bg-destructive/10 cursor-pointer"
+          className="w-full justify-start gap-3 text-destructive hover:text-destructive hover:bg-destructive/10 "
         >
           <LogOut className="h-5 w-5" />
           Çıkış Yap

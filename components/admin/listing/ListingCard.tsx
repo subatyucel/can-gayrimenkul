@@ -1,120 +1,125 @@
-"use client";
+'use client';
 
+import { useTransition } from 'react';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import {
   Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
   CardHeader,
   CardTitle,
-  CardDescription,
-  CardAction,
-  CardContent,
-  CardFooter,
-} from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Pencil, Trash2, Power } from "lucide-react";
-import { useRouter } from "next/navigation";
-import type { AdminListing } from "@/types/types";
+} from '@/components/ui/card';
+import { ListingCardData } from '@/types';
+import { Pencil, Power } from 'lucide-react';
+import Image from 'next/image';
+import { deleteListing, toggleListingState } from '@/actions/listing';
+import { toast } from 'sonner';
 
-interface ListingCardProps {
-  listing: AdminListing;
-  isOwner: boolean;
-  isDisabled: boolean;
-  onToggle: () => void;
-  onDelete: () => void;
-}
+import DeleteListingButtonWithAlert from './DeleteListingButtonWithAlert';
+import Link from 'next/link';
 
-export function ListingCard({
-  listing,
-  isOwner,
-  isDisabled,
-  onToggle,
-  onDelete,
-}: ListingCardProps) {
-  const router = useRouter();
+export function ListingCard({ listing }: { listing: ListingCardData }) {
+  const [isPending, startTransition] = useTransition();
+
+  function handleToggle() {
+    startTransition(async () => {
+      const toastId = toast.loading('İlan durumu değiştiriliyor...');
+      const response = await toggleListingState(listing.id);
+
+      if (!response.success) {
+        toast.error(response.error, { id: toastId });
+        return;
+      }
+
+      toast.success(response.message, { id: toastId });
+    });
+  }
+
+  function handleDelete() {
+    startTransition(async () => {
+      const toastId = toast.loading('İlan siliniyor...');
+      const response = await deleteListing(listing.id);
+
+      if (!response.success) {
+        toast.error(response.error, { id: toastId });
+        return;
+      }
+
+      toast.success(response.message, { id: toastId });
+    });
+  }
 
   return (
-    <Card className="transition-colors hover:bg-accent/50 gap-4">
+    <Card className="relative mx-auto max-w-50 pt-0">
+      <Image
+        width={100}
+        height={100}
+        src={
+          listing.images[0]?.url ||
+          'https://placehold.co/400x200/webp?text=%C4%B0lan+Foto%C4%9Fraf%C4%B1%5Cn+Bulunamad%C4%B1'
+        }
+        alt="İlan kapak fotoğrafı"
+        className="relative z-20 aspect-video w-full object-cover  "
+      />
       <CardHeader>
-        <CardTitle className="truncate text-base">{listing.title}</CardTitle>
-        <CardDescription className="font-mono">
-          #{listing.listingNumber}
+        <CardTitle className="truncate font-bold leading-normal pb-1">
+          #{listing.listingNumber} - {listing.title}
+        </CardTitle>
+        <CardDescription>
+          <Badge variant="secondary">
+            {listing.listingType == 'sale' ? 'Satılık' : 'Kiralık'}
+          </Badge>
+          <Badge variant={listing.isActive ? 'active' : 'passive'}>
+            {listing.isActive ? 'Aktif' : 'Pasif'}
+          </Badge>
         </CardDescription>
-        <CardAction>
-          <div className="flex gap-1.5">
-            <span
-              className={`px-2 py-1 rounded-full text-xs font-semibold ${
-                listing.listingType === "sale"
-                  ? "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400"
-                  : "bg-teal-100 text-teal-700 dark:bg-teal-900/30 dark:text-teal-400"
-              }`}
-            >
-              {listing.listingType === "sale" ? "Satılık" : "Kiralık"}
-            </span>
-            <span
-              className={`px-2 py-1 rounded-full text-xs font-semibold ${
-                listing.isActive
-                  ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
-                  : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
-              }`}
-            >
-              {listing.isActive ? "Aktif" : "Pasif"}
-            </span>
-          </div>
-        </CardAction>
       </CardHeader>
 
-      <CardContent className="space-y-2">
-        <div className="flex items-center justify-between text-sm">
-          <span className="text-muted-foreground">
-            {listing.district.name} / {listing.neighborhood.name}
-          </span>
-          <span className="font-semibold">
-            ₺{listing.price.toLocaleString("tr-TR")}
-          </span>
-        </div>
-        {isOwner && (
-          <p className="text-xs text-muted-foreground">
-            Ekleyen: {listing.user.fullName}
-          </p>
-        )}
+      <CardContent>
+        <p className="font-bold">
+          Fiyat: ₺{listing.price.toLocaleString('tr-TR')}
+        </p>
+        <p className="text-muted-foreground">
+          {listing.district.name} / {listing.neighborhood.name}
+        </p>
+        <p className="text-xs text-muted-foreground">
+          Oluşturan: {listing.user.fullName}
+        </p>
+        <p className="text-xs text-muted-foreground">
+          Oluşturma tarihi:{' '}
+          {new Date(listing.createdAt).toLocaleDateString('tr-TR')}
+        </p>
       </CardContent>
 
-      <CardFooter className="justify-between border-t pt-4">
-        <span className="text-xs text-muted-foreground italic">
-          {new Date(listing.createdAt).toLocaleDateString("tr-TR")}
-        </span>
-        <div className="flex gap-2">
-          <Button
-            variant={listing.isActive ? "secondary" : "default"}
-            size="icon"
-            className="h-8 w-8"
-            title={listing.isActive ? "Pasife Al" : "Aktif Et"}
-            onClick={onToggle}
-            disabled={isDisabled}
-          >
-            <Power className="h-4 w-4" />
-          </Button>
+      <CardFooter className="flex gap-2 justify-center">
+        <Button
+          variant={listing.isActive ? 'destructive' : 'success'}
+          size="icon"
+          title={listing.isActive ? 'Pasife Al' : 'Aktif Et'}
+          onClick={handleToggle}
+          disabled={isPending}
+        >
+          <Power />
+        </Button>
+        <Link href={`/admin/ilanlar/${listing.slug}/duzenle`}>
           <Button
             variant="outline"
             size="icon"
-            className="h-8 w-8"
             title="Düzenle"
-            onClick={() =>
-              router.push(`/admin/ilanlar/${listing.slug}/duzenle`)
-            }
+            className="cursor-pointer"
+            disabled={isPending}
           >
-            <Pencil className="h-4 w-4" />
+            <Pencil />
           </Button>
-          <Button
-            variant="destructive"
-            size="icon"
-            className="h-8 w-8"
-            title="Sil"
-            onClick={onDelete}
-            disabled={isDisabled}
-          >
-            <Trash2 className="h-4 w-4" />
-          </Button>
-        </div>
+        </Link>
+        <DeleteListingButtonWithAlert
+          title={listing.title}
+          slug={listing.slug}
+          isPending={isPending}
+          handleDelete={handleDelete}
+        />
       </CardFooter>
     </Card>
   );

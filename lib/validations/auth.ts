@@ -81,3 +81,54 @@ export const resetPasswordSchema = z
   });
 
 export type ResetPasswordFormValues = z.infer<typeof resetPasswordSchema>;
+
+export const changePasswordSchema = z
+  .object({
+    password: z
+      .string()
+      .min(8, 'Şifre en az 8 karakterli olmalıdır')
+      .regex(
+        /^(?=.*[A-Za-z])(?=.*\d)/,
+        'Şifre en az bir harf ve bir rakam içermelidir',
+      ),
+    newPassword: z
+      .string()
+      .min(8, 'Şifre en az 8 karakterli olmalıdır')
+      .regex(
+        /^(?=.*[A-Za-z])(?=.*\d)/,
+        'Şifre en az bir harf ve bir rakam içermelidir',
+      ),
+
+    confirmPassword: z
+      .string()
+      .min(8, 'Şifre en az 8 karakterli olmalıdır')
+      .regex(
+        /^(?=.*[A-Za-z])(?=.*\d)/,
+        'Şifre en az bir harf ve bir rakam içermelidir',
+      ),
+  })
+  .refine((data) => data.newPassword === data.confirmPassword, {
+    message: 'Şifreler eşleşmiyor!',
+    path: ['confirmPassword'],
+  });
+
+export type ChangePasswordFormValues = z.infer<typeof changePasswordSchema>;
+
+export const changeEmailSchema = z.object({
+  newEmail: z.string().trim().pipe(z.email('Geçerli bir e-posta adresi girin')),
+  password: z
+    .string()
+    .min(8, 'Şifre en az 8 karakterli olmalıdır')
+    .regex(
+      /^(?=.*[A-Za-z])(?=.*\d)/,
+      'Şifre en az bir harf ve bir rakam içermelidir',
+    ),
+});
+
+export type ChangeEmailFormValues = z.infer<typeof changeEmailSchema>;
+
+export const verifyOtpSchema = z.object({
+  code: z.string().length(6, 'Doğrulama kodu 6 haneli olmalıdır.'),
+});
+
+export type VerifyOtpFormValues = z.infer<typeof verifyOtpSchema>;

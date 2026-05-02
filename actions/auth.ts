@@ -2,9 +2,20 @@
 
 import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcrypt';
-import { cookies } from 'next/headers';
-import { jwtVerify } from 'jose';
 import {
+  createSession,
+  deleteSession,
+  generateToken,
+  getCurrentUser,
+  verifyToken,
+} from '@/lib/auth';
+import { ActionResponseFactory, formatZodErrors } from '@/lib/action-response';
+import { sendResetPasswordMail } from '@/lib/mail';
+import {
+  ChangeEmailFormValues,
+  changeEmailSchema,
+  ChangePasswordFormValues,
+  changePasswordSchema,
   ForgotPasswordFormValues,
   forgotPasswordSchema,
   LoginFormValues,
@@ -13,22 +24,12 @@ import {
   registerSchema,
   ResetPasswordFormValues,
   resetPasswordSchema,
-} from '@/lib/validations/validations';
-import {
-  createSession,
-  deleteSession,
-  generateToken,
-  verifyToken,
-} from '@/lib/auth';
-import { ActionResponseFactory, formatZodErrors } from '@/lib/action-response';
-import { sendResetPasswordMail } from '@/lib/mail';
+} from '@/lib/validations/auth';
+import { generateAndSendOtp, verifyOtp } from './otp';
 
-const SECRET = new TextEncoder().encode(process.env.JWT_SECRET);
-
-export async function registerUser(formValues: RegisterFormValues) {
+export async function requestRegister(formValues: RegisterFormValues) {
   try {
     const { data, error, success } = registerSchema.safeParse(formValues);
-
     if (!success) {
       return ActionResponseFactory.error(
         'Lütfen formdaki alanları uygun değerler ile doldurun!',
@@ -46,27 +47,47 @@ export async function registerUser(formValues: RegisterFormValues) {
     const isUserExist = await prisma.user.findUnique({
       where: { email: data.email },
     });
-
     if (isUserExist) {
       return ActionResponseFactory.error(
         'Bu mail adresi kullanımda. Şifremi unuttum ekranından şifrenizi sıfırlayabilirsiniz.',
       );
     }
 
-    const hashedPassword = await bcrypt.hash(data.password, 10);
-    const { confirmPassword, token, ...dbData } = data;
+    return await generateAndSendOtp(data.email, 'REGISTER');
+  } catch (error) {
+    console.error('💥💥 requestRegister action error', error);
+    return ActionResponseFactory.error(
+      'Sunucu tarafında beklenmeyen bir hata oluştu.',
+    );
+  }
+}
 
-    await prisma.$transaction([
-      prisma.user.create({
-        data: { ...dbData, password: hashedPassword, role: 'admin' },
-      }),
-    ]);
+export async function confirmRegister(
+  formValues: RegisterFormValues,
+  code: string,
+) {
+  try {
+    const payload = await verifyToken(formValues.token);
+    if (!payload || payload.purpose !== 'invite') {
+      return ActionResponseFactory.error('Davet linkiniz geçerli değil!');
+    }
 
+    const verifyResult = await verifyOtp(formValues.email, code, 'REGISTER');
+    if (!verifyResult.success) {
+      return ActionResponseFactory.error(verifyResult.error);
+    }
+
+    const hashedPassword = await bcrypt.hash(formValues.password, 10);
+    const { confirmPassword, token, ...dbData } = formValues;
+
+    await prisma.user.create({
+      data: { ...dbData, password: hashedPassword, role: 'admin' },
+    });
     return ActionResponseFactory.success(
       'Kayıt işlemi başarılı. Bilgilerinizle giriş yapabilirsiniz.',
     );
   } catch (error) {
-    console.error('💥💥Register action error', error);
+    console.error('💥💥 verifyRegister error: ', error);
     return ActionResponseFactory.error(
       'Sunucu tarafında beklenmeyen bir hata oluştu.',
     );
@@ -182,25 +203,163 @@ export async function logout() {
   }
 }
 
-export async function getCurrentUserId(): Promise<string | null> {
-  const cookieStore = await cookies();
-  const token = cookieStore.get('admin_session')?.value;
-  if (!token) return null;
-
+export async function requestPasswordChange(
+  formValues: ChangePasswordFormValues,
+) {
   try {
-    const { payload } = await jwtVerify(token, SECRET);
-    return payload.userId as string;
-  } catch {
-    return null;
+    const { data, error, success } = changePasswordSchema.safeParse(formValues);
+    if (!success) {
+      return ActionResponseFactory.error(
+        'Lütfen formdaki alanları uygun değerler ile doldurun!',
+        formatZodErrors(error),
+      );
+    }
+
+    const currentUser = await getCurrentUser();
+    if (!currentUser) {
+      return ActionResponseFactory.error(
+        'Bu işlemi yapabilmek için yetkiniz bulunmamaktadır.',
+      );
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { id: currentUser.id },
+    });
+    if (!user || !(await bcrypt.compare(data.password, user.password))) {
+      return ActionResponseFactory.error('Bilgiler hatalı!');
+    }
+
+    const otpResult = await generateAndSendOtp(user.email, 'CHANGE_PASSWORD');
+    if (!otpResult.success) {
+      return ActionResponseFactory.error(otpResult.error);
+    }
+
+    return ActionResponseFactory.success('Doğrulama kodu gönderildi.', {
+      email: user.email,
+    });
+  } catch (error) {
+    console.error('💥💥 requestPasswordChange action error: ', error);
+    return ActionResponseFactory.error(
+      'İşlem sırasında bir hata meydana geldi.',
+    );
   }
 }
 
-export async function getCurrentUser() {
-  const userId = await getCurrentUserId();
-  if (!userId) return null;
+export async function confirmPasswordChage(newPassword: string, code: string) {
+  try {
+    const currentUser = await getCurrentUser();
+    if (!currentUser) {
+      return ActionResponseFactory.error(
+        'Bu işlemi yapabilmek için yetkiniz bulunmamaktadır.',
+      );
+    }
 
-  return prisma.user.findUnique({
-    where: { id: userId },
-    select: { id: true, email: true, fullName: true, role: true },
+    const user = await prisma.user.findUnique({
+      where: { id: currentUser.id },
+    });
+    if (!user) return ActionResponseFactory.error('Kullanıcı bulunamadı.');
+
+    const verifyResult = await verifyOtp(user.email, code, 'CHANGE_PASSWORD');
+    if (!verifyResult.success) {
+      return ActionResponseFactory.error(verifyResult.error);
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { password: hashedPassword },
+    });
+
+    return ActionResponseFactory.success('Şifreniz başarıyla güncellendi!');
+  } catch (error) {
+    console.error('💥💥 verifyPasswordChange action error: ', error);
+    return ActionResponseFactory.error('Şifre güncellenirken hata oluştu.');
+  }
+}
+
+export async function requestEmailChange(formValues: ChangeEmailFormValues) {
+  try {
+    const { data, error, success } = changeEmailSchema.safeParse(formValues);
+    if (!success) {
+      return ActionResponseFactory.error(
+        'Lütfen formdaki alanları uygun değerler ile doldurun!',
+        formatZodErrors(error),
+      );
+    }
+
+    const currentUser = await getCurrentUser();
+    if (!currentUser) {
+      return ActionResponseFactory.error(
+        'Bu işlemi yapabilmek için yetkiniz bulunmamaktadır.',
+      );
+    }
+
+    const isEmailExist = await prisma.user.findUnique({
+      where: { email: data.newEmail },
+    });
+    if (isEmailExist) {
+      return ActionResponseFactory.error('Bu mail adresi kullanımda.');
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { id: currentUser.id },
+    });
+
+    if (!user || !(await bcrypt.compare(data.password, user.password))) {
+      return ActionResponseFactory.error('Bilgiler hatalı!');
+    }
+
+    return await generateAndSendOtp(data.newEmail, 'CHANGE_EMAIL');
+  } catch (error) {
+    console.error('💥💥 requestEmailChange action error: ', error);
+    return ActionResponseFactory.error(
+      'Mail adresine kod gönderilirken bir hata meydana geldi.',
+    );
+  }
+}
+
+export async function confirmEmailChange(newEmail: string, code: string) {
+  const currentUser = await getCurrentUser();
+  if (!currentUser) {
+    return ActionResponseFactory.error('Giriş yapmanız gerekir.');
+  }
+
+  const isVerified = await verifyOtp(newEmail, code, 'CHANGE_EMAIL');
+  if (!isVerified.success) return isVerified;
+
+  await prisma.user.update({
+    where: { id: currentUser?.id },
+    data: { email: newEmail },
   });
+
+  return ActionResponseFactory.success('Mail adresi başarıyla güncellendi.');
+}
+
+export async function generateInviteLink() {
+  try {
+    const currentUser = await getCurrentUser();
+    if (!currentUser || currentUser.role !== 'owner') {
+      return ActionResponseFactory.error(
+        'Bu işlemi yapmak için yetkiniz yok. Yöneticinizle iletişime geçin',
+      );
+    }
+
+    const token = await generateToken(
+      { id: currentUser.id, email: currentUser.email },
+      'invite',
+    );
+
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
+    const inviteLink = `${baseUrl}/admin/kayit-ol?t=${token}`;
+
+    return ActionResponseFactory.success(
+      'Link başarıyla oluşturuldu.',
+      inviteLink,
+    );
+  } catch (error) {
+    console.error('💥💥 generateInviteLink error: ', error);
+    return ActionResponseFactory.error(
+      'Link oluşturulurken bir hata meydana geldi.',
+    );
+  }
 }

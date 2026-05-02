@@ -10,6 +10,22 @@ import RegisterForm from '@/components/admin/auth/RegisterForm';
 import InvalidTokenCard from '@/components/admin/auth/InvalidTokenCard';
 import { NextPageProps } from '@/types';
 import { verifyToken } from '@/lib/auth';
+import { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Kayıt ol | Can Gayrimenkul Yönetim Paneli',
+  description:
+    'Can Gayrimenkul Yönetim Paneline Davet Edildiniz. Hemen kayıt olarak ilan yayınlamaya başlayabilirsiniz.',
+  openGraph: {
+    images: [
+      {
+        url: 'https://can-gayrimenkul.vercel.app/logo.png',
+        width: 1200,
+        height: 630,
+      },
+    ],
+  },
+};
 
 export default async function RegisterPage({
   searchParams,

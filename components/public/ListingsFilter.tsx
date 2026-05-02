@@ -1,21 +1,21 @@
-"use client";
+'use client';
 
-import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState, useTransition } from "react";
-import { SlidersHorizontal, X, ChevronDown } from "lucide-react";
-import { getNeighborhoods } from "@/actions/listing";
-import { featureOptions } from "@/lib/constans";
-import type { District, Neighborhood } from "@/types/types";
+import { useRouter, useSearchParams } from 'next/navigation';
+import { useEffect, useState, useTransition } from 'react';
+import { SlidersHorizontal, X, ChevronDown } from 'lucide-react';
+import { getNeighborhoods } from '@/actions/listing';
+import type { District, Neighborhood } from '@/types/types';
+import { featureOptions } from '@/lib/validations/listing';
 
 type ListingsFilterProps = {
   districts: District[];
 };
 
 const SORT_OPTIONS = [
-  { value: "newest", label: "En Yeni" },
-  { value: "oldest", label: "En Eski" },
-  { value: "price_asc", label: "Fiyat: Düşükten Yükseğe" },
-  { value: "price_desc", label: "Fiyat: Yüksekten Düşüğe" },
+  { value: 'newest', label: 'En Yeni' },
+  { value: 'oldest', label: 'En Eski' },
+  { value: 'price_asc', label: 'Fiyat: Düşükten Yükseğe' },
+  { value: 'price_desc', label: 'Fiyat: Yüksekten Düşüğe' },
 ];
 
 export default function ListingsFilter({ districts }: ListingsFilterProps) {
@@ -24,15 +24,15 @@ export default function ListingsFilter({ districts }: ListingsFilterProps) {
   const [isPending, startTransition] = useTransition();
   const [isOpen, setIsOpen] = useState(false);
 
-  const [listingType, setListingType] = useState(searchParams.get("tur") ?? "");
-  const [districtId, setDistrictId] = useState(searchParams.get("ilce") ?? "");
+  const [listingType, setListingType] = useState(searchParams.get('tur') ?? '');
+  const [districtId, setDistrictId] = useState(searchParams.get('ilce') ?? '');
   const [neighborhoodId, setNeighborhoodId] = useState(
-    searchParams.get("mahalle") ?? "",
+    searchParams.get('mahalle') ?? '',
   );
-  const [roomCount, setRoomCount] = useState(searchParams.get("oda") ?? "");
-  const [minPrice, setMinPrice] = useState(searchParams.get("minFiyat") ?? "");
-  const [maxPrice, setMaxPrice] = useState(searchParams.get("maxFiyat") ?? "");
-  const [sort, setSort] = useState(searchParams.get("sirala") ?? "newest");
+  const [roomCount, setRoomCount] = useState(searchParams.get('oda') ?? '');
+  const [minPrice, setMinPrice] = useState(searchParams.get('minFiyat') ?? '');
+  const [maxPrice, setMaxPrice] = useState(searchParams.get('maxFiyat') ?? '');
+  const [sort, setSort] = useState(searchParams.get('sirala') ?? 'newest');
   const [neighborhoods, setNeighborhoods] = useState<Neighborhood[]>([]);
 
   useEffect(() => {
@@ -57,7 +57,7 @@ export default function ListingsFilter({ districts }: ListingsFilterProps) {
     };
 
     for (const [key, value] of Object.entries(values)) {
-      if (value && value !== "newest") params.set(key, value);
+      if (value && value !== 'newest') params.set(key, value);
     }
 
     startTransition(() => {
@@ -68,15 +68,15 @@ export default function ListingsFilter({ districts }: ListingsFilterProps) {
   }
 
   function clearFilters() {
-    setListingType("");
-    setDistrictId("");
-    setNeighborhoodId("");
-    setRoomCount("");
-    setMinPrice("");
-    setMaxPrice("");
-    setSort("newest");
+    setListingType('');
+    setDistrictId('');
+    setNeighborhoodId('');
+    setRoomCount('');
+    setMinPrice('');
+    setMaxPrice('');
+    setSort('newest');
     startTransition(() => {
-      router.push("/ilanlar");
+      router.push('/ilanlar');
     });
   }
 
@@ -104,7 +104,7 @@ export default function ListingsFilter({ districts }: ListingsFilterProps) {
             </span>
           )}
           <ChevronDown
-            className={`h-3.5 w-3.5 transition-transform ${isOpen ? "rotate-180" : ""}`}
+            className={`h-3.5 w-3.5 transition-transform ${isOpen ? 'rotate-180' : ''}`}
           />
         </button>
 
@@ -127,7 +127,7 @@ export default function ListingsFilter({ districts }: ListingsFilterProps) {
 
       {/* Filter panel */}
       <aside
-        className={`${isOpen ? "block" : "hidden"} lg:block w-full lg:w-64 xl:w-72 shrink-0`}
+        className={`${isOpen ? 'block' : 'hidden'} lg:block w-full lg:w-64 xl:w-72 shrink-0`}
       >
         <div className="border border-gray-200 bg-white p-5 space-y-5 sticky top-24 rounded-sm shadow-sm">
           {/* Header */}
@@ -153,17 +153,17 @@ export default function ListingsFilter({ districts }: ListingsFilterProps) {
             </label>
             <div className="grid grid-cols-3 gap-1.5">
               {[
-                { value: "", label: "Tümü" },
-                { value: "sale", label: "Satılık" },
-                { value: "rent", label: "Kiralık" },
+                { value: '', label: 'Tümü' },
+                { value: 'sale', label: 'Satılık' },
+                { value: 'rent', label: 'Kiralık' },
               ].map((opt) => (
                 <button
                   key={opt.value}
                   onClick={() => setListingType(opt.value)}
                   className={`py-2 text-[11px] tracking-wider uppercase transition-all border rounded-sm ${
                     listingType === opt.value
-                      ? "bg-gold text-white border-gold font-medium"
-                      : "bg-white text-gray-500 border-gray-200 hover:border-gold/50 hover:text-gold"
+                      ? 'bg-gold text-white border-gold font-medium'
+                      : 'bg-white text-gray-500 border-gray-200 hover:border-gold/50 hover:text-gold'
                   }`}
                 >
                   {opt.label}
@@ -181,7 +181,7 @@ export default function ListingsFilter({ districts }: ListingsFilterProps) {
               value={districtId}
               onChange={(e) => {
                 setDistrictId(e.target.value);
-                setNeighborhoodId("");
+                setNeighborhoodId('');
                 setNeighborhoods([]);
               }}
               className="w-full bg-white border border-gray-200 text-gray-700 text-xs px-3 py-2.5 focus:outline-none focus:border-gold/50 transition-colors rounded-sm"
@@ -281,7 +281,7 @@ export default function ListingsFilter({ districts }: ListingsFilterProps) {
             disabled={isPending}
             className="w-full bg-gold hover:bg-[#b08d4a] text-white text-xs tracking-[0.3em] uppercase py-3 font-medium transition-all duration-300 rounded-sm disabled:opacity-60 disabled:cursor-not-allowed"
           >
-            {isPending ? "Aranıyor..." : "Filtrele"}
+            {isPending ? 'Aranıyor...' : 'Filtrele'}
           </button>
         </div>
       </aside>
