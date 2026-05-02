@@ -1,5 +1,5 @@
 import { ListingWithImages } from '@/components/admin/listing/listing-form/CreateUpdateListingForm';
-import { ListingFormInput, ListingFormOutput } from '@/lib/validations/listing';
+import { ListingFormInput } from '@/lib/validations/listing';
 
 export const TAB_FIELDS: Record<string, (keyof ListingFormInput)[]> = {
   general: ['title', 'description', 'listingType', 'price'],
